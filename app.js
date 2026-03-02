@@ -903,9 +903,12 @@
   // ─── Calendar Page Renderer ───────────────────────────────────────────────
 
   var calendarView = "today";
+  var calendarViewMode = "grid"; // "grid" | "timeline" | "tasks"
+  var calendarNavYear = new Date().getFullYear();
+  var calendarNavMonth = new Date().getMonth(); // 0-based
+  var calendarSelectedDate = null; // "YYYY-MM-DD"
 
   async function renderCalendar() {
-    // Set today date in header
     var todayEl = document.getElementById("cal-today-date");
     if (todayEl) {
       var now = new Date();
@@ -915,16 +918,25 @@
         weekday: "short",
       });
     }
-
-    // Preset today's date in add form if empty
     var addDateEl = document.getElementById("cal-add-date");
     if (addDateEl && !addDateEl.value) {
       addDateEl.value = new Date().toISOString().slice(0, 10);
     }
+    // show/hide add strip based on mode
+    var strip = document.getElementById("cal-add-strip");
+    if (strip) {
+      strip.style.display = calendarViewMode === "tasks" ? "none" : "";
+    }
 
-    var events = await fetchCalendarData();
-    renderCalendarHero(events);
-    renderCalendarTimeline(events, calendarView);
+    if (calendarViewMode === "grid") {
+      var events = await fetchCalendarData();
+      renderCalendarGridView(events);
+    } else if (calendarViewMode === "timeline") {
+      var events2 = await fetchCalendarData();
+      renderCalendarTimelineView(events2);
+    } else {
+      renderTaskDrivenView();
+    }
   }
 
   function renderCalendarHero(events) {
@@ -1162,6 +1174,326 @@
         }
       });
     });
+  }
+
+  // ─── Calendar Grid View ───────────────────────────────────────────────────
+
+  function renderCalendarGridView(events) {
+    var content = document.getElementById("cal-content");
+    if (!content) {
+      return;
+    }
+
+    var now = new Date();
+    var todayStr = now.toISOString().slice(0, 10);
+    var year = calendarNavYear;
+    var month = calendarNavMonth; // 0-based
+
+    // Build event map by date
+    var eventMap = {};
+    events.forEach(function (ev) {
+      if (!eventMap[ev.date]) {
+        eventMap[ev.date] = [];
+      }
+      eventMap[ev.date].push(ev);
+    });
+
+    var monthNames = [
+      "一月",
+      "二月",
+      "三月",
+      "四月",
+      "五月",
+      "六月",
+      "七月",
+      "八月",
+      "九月",
+      "十月",
+      "十一月",
+      "十二月",
+    ];
+
+    var firstDay = new Date(year, month, 1).getDay();
+    var firstDayMon = firstDay === 0 ? 6 : firstDay - 1;
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    var cells = [];
+    for (var i = 0; i < firstDayMon; i++) {
+      cells.push({ day: daysInPrevMonth - firstDayMon + 1 + i, outMonth: true, dateStr: null });
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      var ds = year + "-" + String(month + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+      cells.push({ day: d, outMonth: false, dateStr: ds });
+    }
+    var rem = (7 - (cells.length % 7)) % 7;
+    for (var j = 1; j <= rem; j++) {
+      cells.push({ day: j, outMonth: true, dateStr: null });
+    }
+
+    var dowHtml = ["一", "二", "三", "四", "五", "六", "日"]
+      .map(function (d) {
+        return `<div class="cal-grid-dow">${d}</div>`;
+      })
+      .join("");
+
+    var typeColors = {
+      meeting: "#3b82f6",
+      important: "#f59e0b",
+      study: "#a78bfa",
+      health: "#14b8a6",
+      personal: "#f472b6",
+      work: "#3b82f6",
+      local: "#f59e0b",
+    };
+
+    var cellsHtml = cells
+      .map(function (cell) {
+        var cls = ["cal-cell"];
+        if (cell.outMonth) {
+          cls.push("out-month");
+        }
+        if (cell.dateStr === todayStr) {
+          cls.push("today");
+        }
+        if (cell.dateStr && cell.dateStr === calendarSelectedDate) {
+          cls.push("selected");
+        }
+
+        var dots = "";
+        if (cell.dateStr && eventMap[cell.dateStr]) {
+          var evs = eventMap[cell.dateStr].slice(0, 3);
+          dots = evs
+            .map(function (ev) {
+              return `<span class="cal-dot-sm ${escapeHtml(ev.type || "personal")}"></span>`;
+            })
+            .join("");
+        }
+
+        var da = cell.dateStr ? `data-date="${cell.dateStr}"` : "";
+        return `<div class="${cls.join(" ")}" ${da}><div class="cal-cell-num">${cell.day}</div><div class="cal-cell-dots">${dots}</div></div>`;
+      })
+      .join("");
+
+    // Day panel
+    var dayPanelHtml = "";
+    if (calendarSelectedDate && eventMap[calendarSelectedDate] !== undefined) {
+      var selObj = new Date(calendarSelectedDate + "T12:00:00");
+      var selLabel = selObj.toLocaleDateString("zh-TW", {
+        month: "long",
+        day: "numeric",
+        weekday: "long",
+      });
+      var selEvs = eventMap[calendarSelectedDate] || [];
+      var evRowsHtml = selEvs.length
+        ? selEvs
+            .map(function (ev) {
+              var color = typeColors[ev.type] || "var(--lp-amber)";
+              return `<div class="cal-day-event-row">
+              <div class="cal-day-event-dot" style="background:${color}"></div>
+              <div class="cal-day-event-time">${escapeHtml(ev.allDay ? "全天" : ev.time)}</div>
+              <div class="cal-day-event-title">${escapeHtml(ev.summary)}</div>
+            </div>`;
+            })
+            .join("")
+        : `<div style="font-size:0.8rem;color:var(--lp-muted);padding:0.25rem 0">無行程</div>`;
+      dayPanelHtml = `<div id="cal-day-panel"><div class="cal-day-panel-header">${escapeHtml(selLabel)}</div>${evRowsHtml}</div>`;
+    } else if (calendarSelectedDate) {
+      var selObj2 = new Date(calendarSelectedDate + "T12:00:00");
+      var selLabel2 = selObj2.toLocaleDateString("zh-TW", {
+        month: "long",
+        day: "numeric",
+        weekday: "long",
+      });
+      dayPanelHtml = `<div id="cal-day-panel"><div class="cal-day-panel-header">${escapeHtml(selLabel2)}</div><div style="font-size:0.8rem;color:var(--lp-muted);padding:0.25rem 0">無行程</div></div>`;
+    }
+
+    content.innerHTML = `<div id="cal-grid-view">
+      <div class="cal-month-nav">
+        <button class="cal-month-nav-btn" id="cal-prev-month" aria-label="上月">‹</button>
+        <div class="cal-month-title">
+          <span class="cal-month-name">${monthNames[month]}</span>
+          <span class="cal-month-year">${year}</span>
+        </div>
+        <button class="cal-month-nav-btn" id="cal-next-month" aria-label="下月">›</button>
+      </div>
+      <div class="cal-grid-wrap">
+        <div class="cal-grid">${dowHtml}${cellsHtml}</div>
+        ${dayPanelHtml}
+      </div>
+    </div>`;
+
+    document.getElementById("cal-prev-month")?.addEventListener("click", function () {
+      calendarNavMonth--;
+      if (calendarNavMonth < 0) {
+        calendarNavMonth = 11;
+        calendarNavYear--;
+      }
+      void renderCalendar();
+    });
+    document.getElementById("cal-next-month")?.addEventListener("click", function () {
+      calendarNavMonth++;
+      if (calendarNavMonth > 11) {
+        calendarNavMonth = 0;
+        calendarNavYear++;
+      }
+      void renderCalendar();
+    });
+
+    content.querySelectorAll(".cal-cell[data-date]").forEach(function (cell) {
+      cell.addEventListener("click", function () {
+        var date = cell.dataset.date;
+        calendarSelectedDate = calendarSelectedDate === date ? null : date;
+        renderCalendarGridView(events);
+      });
+    });
+  }
+
+  // ─── Calendar Timeline View (wrapper) ─────────────────────────────────────
+
+  function renderCalendarTimelineView(events) {
+    var content = document.getElementById("cal-content");
+    if (!content) {
+      return;
+    }
+
+    var viewTabs = ["today", "week", "all"]
+      .map(function (v) {
+        var labels = { today: "今天", week: "本週", all: "全部" };
+        var isActive = calendarView === v;
+        return `<button class="filter-tab${isActive ? " active" : ""}" data-cal-view="${v}" role="tab" ${isActive ? 'aria-selected="true"' : 'aria-selected="false"'}>${labels[v]}</button>`;
+      })
+      .join("");
+
+    content.innerHTML = `<div id="cal-timeline-view">
+      <div id="cal-hero"></div>
+      <div class="filter-tabs" role="tablist" aria-label="日曆檢視">${viewTabs}</div>
+      <div id="cal-timeline" class="card-list" role="list" aria-label="事件列表"></div>
+    </div>`;
+
+    renderCalendarHero(events);
+    renderCalendarTimeline(events, calendarView);
+
+    content.querySelectorAll("[data-cal-view]").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        content.querySelectorAll("[data-cal-view]").forEach(function (t) {
+          t.classList.remove("active");
+          t.setAttribute("aria-selected", "false");
+        });
+        tab.classList.add("active");
+        tab.setAttribute("aria-selected", "true");
+        calendarView = tab.dataset.calView || "today";
+        renderCalendarTimeline(events, calendarView);
+      });
+    });
+  }
+
+  // ─── Task-Driven View ─────────────────────────────────────────────────────
+
+  function renderTaskDrivenView() {
+    var content = document.getElementById("cal-content");
+    if (!content) {
+      return;
+    }
+
+    var tasks = MOCK.tasks;
+    var now = new Date();
+    var todayStr = now.toISOString().slice(0, 10);
+    var weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    var weekEndStr = weekEnd.toISOString().slice(0, 10);
+    var nextWeekEnd = new Date(now);
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 14);
+    var nextWeekEndStr = nextWeekEnd.toISOString().slice(0, 10);
+
+    var groups = { overdue: [], today: [], week: [], nextWeek: [], later: [], noDue: [] };
+    tasks.forEach(function (t) {
+      if (t.status === "done") {
+        return;
+      }
+      if (!t.due) {
+        groups.noDue.push(t);
+        return;
+      }
+      if (t.due < todayStr) {
+        groups.overdue.push(t);
+      } else if (t.due === todayStr) {
+        groups.today.push(t);
+      } else if (t.due <= weekEndStr) {
+        groups.week.push(t);
+      } else if (t.due <= nextWeekEndStr) {
+        groups.nextWeek.push(t);
+      } else {
+        groups.later.push(t);
+      }
+    });
+
+    function dueTxt(due) {
+      if (!due) {
+        return "";
+      }
+      if (due < todayStr) {
+        var daysLate = Math.round((now - new Date(due + "T12:00:00")) / 86400000);
+        return "逾期 " + daysLate + "天";
+      }
+      if (due === todayStr) {
+        return "今天";
+      }
+      var diff = Math.round((new Date(due + "T12:00:00") - now) / 86400000);
+      if (diff === 1) {
+        return "明天";
+      }
+      if (diff < 7) {
+        return diff + " 天後";
+      }
+      if (diff < 14) {
+        return "下週";
+      }
+      return due;
+    }
+
+    var agentEmoji = { main: "🧠", executor: "⚡", reviewer: "👁" };
+
+    function renderGroup(list, horizonCls, chipLabel) {
+      if (!list.length) {
+        return "";
+      }
+      var cards = list
+        .map(function (task, idx) {
+          var delay = Math.min(idx * 0.055, 0.55);
+          var emo = agentEmoji[task.agent] || "🤖";
+          var statusCls = task.status === "active" ? "status-active" : "status-pending";
+          var due = dueTxt(task.due);
+          return `<div class="task-mission-card priority-${task.priority} fade-in" style="animation-delay:${delay}s">
+            <div class="task-mission-band"></div>
+            <div class="task-mission-body">
+              <div class="task-mission-title">${escapeHtml(task.title)}</div>
+              <div class="task-mission-meta">
+                <div class="task-status-dot ${statusCls}"></div>
+                ${due ? `<span class="task-due-badge">${escapeHtml(due)}</span>` : ""}
+                <span class="task-agent-label">${emo} ${escapeHtml(task.agent)}</span>
+              </div>
+            </div>
+          </div>`;
+        })
+        .join("");
+      return `<div class="task-horizon-group ${horizonCls}">
+        <div class="task-horizon-chip">${chipLabel}</div>
+        ${cards}
+      </div>`;
+    }
+
+    var html =
+      renderGroup(groups.overdue, "horizon-overdue", "⚠ 逾期") +
+      renderGroup(groups.today, "horizon-today", "▶ 今日") +
+      renderGroup(groups.week, "horizon-week", "本週") +
+      renderGroup(groups.nextWeek, "horizon-next-week", "下週") +
+      renderGroup(groups.later, "horizon-later", "之後") +
+      renderGroup(groups.noDue, "horizon-no-due", "無截止");
+
+    content.innerHTML = html
+      ? `<div id="cal-task-view">${html}</div>`
+      : '<div class="empty-state"><div class="empty-state-icon">🎯</div>所有任務已完成！</div>';
   }
 
   // ─── Task Highlights (Dashboard) ──────────────────────────────────────────
@@ -1590,16 +1922,16 @@
       });
     });
 
-    // Calendar view tabs
-    document.querySelectorAll("[data-cal-view]").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        document.querySelectorAll("[data-cal-view]").forEach(function (t) {
-          t.classList.remove("active");
-          t.setAttribute("aria-selected", "false");
+    // Calendar mode switcher tabs
+    document.querySelectorAll("[data-cal-mode]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll("[data-cal-mode]").forEach(function (b) {
+          b.classList.remove("active");
+          b.setAttribute("aria-selected", "false");
         });
-        tab.classList.add("active");
-        tab.setAttribute("aria-selected", "true");
-        calendarView = tab.dataset.calView || "today";
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+        calendarViewMode = btn.dataset.calMode || "grid";
         void renderCalendar();
       });
     });
