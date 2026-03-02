@@ -456,7 +456,7 @@
   function renderPage(page) {
     switch (page) {
       case "dashboard":
-        renderDashboard();
+        void renderDashboard();
         break;
       case "chat":
         /* chat is maintained */ break;
@@ -652,7 +652,7 @@
     let events;
     try {
       events = await fetchCalendarData();
-    } catch (e) {
+    } catch {
       events = MOCK.calendarFull;
     }
 
@@ -670,8 +670,7 @@
     }
 
     if (todayEvents.length === 0) {
-      container.innerHTML =
-        '<div class="empty-state" style="padding:1rem 0">今日無行程</div>';
+      container.innerHTML = '<div class="empty-state" style="padding:1rem 0">今日無行程</div>';
       return;
     }
 
@@ -714,10 +713,18 @@
 
   function inferEventType(summary) {
     var s = (summary || "").toLowerCase();
-    if (/會議|meeting|standup|討論|評審|合同|簽署|電話|call/.test(s)) return "meeting";
-    if (/投資|investor|series|融資|ipo|重要|urgent/.test(s)) return "important";
-    if (/課程|學習|複習|英語|日語|日文|語言|閱讀|讀書|study|learn/.test(s)) return "study";
-    if (/健身|跑步|運動|健康|gym|hiit|瑜伽|yoga|訓練|體檢|medical/.test(s)) return "health";
+    if (/會議|meeting|standup|討論|評審|合同|簽署|電話|call/.test(s)) {
+      return "meeting";
+    }
+    if (/投資|investor|series|融資|ipo|重要|urgent/.test(s)) {
+      return "important";
+    }
+    if (/課程|學習|複習|英語|日語|日文|語言|閱讀|讀書|study|learn/.test(s)) {
+      return "study";
+    }
+    if (/健身|跑步|運動|健康|gym|hiit|瑜伽|yoga|訓練|體檢|medical/.test(s)) {
+      return "health";
+    }
     return "personal";
   }
 
@@ -729,7 +736,9 @@
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
-      if (!line.startsWith("|")) continue;
+      if (!line.startsWith("|")) {
+        continue;
+      }
 
       var cells = line
         .split("|")
@@ -743,8 +752,9 @@
         cells.every(function (c) {
           return /^[-:]+$/.test(c);
         })
-      )
+      ) {
         continue;
+      }
 
       if (!headerFound) {
         cells.forEach(function (c, idx) {
@@ -765,7 +775,9 @@
       var location = get("location") || get("地點");
       var attendees = get("attendees") || get("參與者");
 
-      if (!date || !summary) continue;
+      if (!date || !summary) {
+        continue;
+      }
 
       var allDay = time === "全天" || time === "-" || time === "" || time === "all day";
 
@@ -782,10 +794,18 @@
     }
 
     events.sort(function (a, b) {
-      if (a.date < b.date) return -1;
-      if (a.date > b.date) return 1;
-      if (a.allDay && !b.allDay) return -1;
-      if (!a.allDay && b.allDay) return 1;
+      if (a.date < b.date) {
+        return -1;
+      }
+      if (a.date > b.date) {
+        return 1;
+      }
+      if (a.allDay && !b.allDay) {
+        return -1;
+      }
+      if (!a.allDay && b.allDay) {
+        return 1;
+      }
       return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
     });
 
@@ -795,7 +815,7 @@
   function getLocalCalendarEvents() {
     try {
       return JSON.parse(localStorage.getItem("kw_calendar_events") || "[]");
-    } catch (e) {
+    } catch {
       return [];
     }
   }
@@ -816,7 +836,7 @@
     events.push(item);
     try {
       localStorage.setItem("kw_calendar_events", JSON.stringify(events.slice(-100)));
-    } catch (e) {}
+    } catch {}
     return item;
   }
 
@@ -826,7 +846,7 @@
     });
     try {
       localStorage.setItem("kw_calendar_events", JSON.stringify(events));
-    } catch (e) {}
+    } catch {}
   }
 
   var calendarCache = null;
@@ -862,10 +882,18 @@
 
     var all = remoteEvents.concat(localEvents);
     all.sort(function (a, b) {
-      if (a.date < b.date) return -1;
-      if (a.date > b.date) return 1;
-      if (a.allDay && !b.allDay) return -1;
-      if (!a.allDay && b.allDay) return 1;
+      if (a.date < b.date) {
+        return -1;
+      }
+      if (a.date > b.date) {
+        return 1;
+      }
+      if (a.allDay && !b.allDay) {
+        return -1;
+      }
+      if (!a.allDay && b.allDay) {
+        return 1;
+      }
       return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
     });
 
@@ -901,7 +929,9 @@
 
   function renderCalendarHero(events) {
     var container = document.getElementById("cal-hero");
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     var now = new Date();
     var todayStr = now.toISOString().slice(0, 10);
@@ -911,7 +941,9 @@
     var next = null;
     for (var i = 0; i < events.length; i++) {
       var ev = events[i];
-      if (ev.allDay) continue;
+      if (ev.allDay) {
+        continue;
+      }
       if (ev.date > todayStr) {
         next = ev;
         break;
@@ -973,7 +1005,9 @@
 
   function renderCalendarTimeline(events, view) {
     var container = document.getElementById("cal-timeline");
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     var now = new Date();
     var todayStr = now.toISOString().slice(0, 10);
@@ -1090,8 +1124,12 @@
             : "";
 
         var sub = "";
-        if (ev.location) sub += "📍 " + escapeHtml(ev.location);
-        if (ev.attendees) sub += (sub ? " · " : "") + escapeHtml(ev.attendees);
+        if (ev.location) {
+          sub += "📍 " + escapeHtml(ev.location);
+        }
+        if (ev.attendees) {
+          sub += (sub ? " · " : "") + escapeHtml(ev.attendees);
+        }
 
         var animDelay = Math.min(delay * 0.06, 0.8);
 
@@ -1587,7 +1625,9 @@
         var titleVal = titleEl ? titleEl.value.trim() : "";
 
         if (!titleVal) {
-          if (titleEl) titleEl.focus();
+          if (titleEl) {
+            titleEl.focus();
+          }
           return;
         }
         if (!dateVal) {
@@ -1596,7 +1636,9 @@
 
         addLocalCalendarEvent({ date: dateVal, time: timeVal, summary: titleVal });
 
-        if (titleEl) titleEl.value = "";
+        if (titleEl) {
+          titleEl.value = "";
+        }
 
         // Fire-and-forget notify Kairo
         if (cfg.mode === "live" && getAPI()) {
@@ -1605,7 +1647,7 @@
               "新行程: " + titleVal + " @ " + dateVal + (timeVal ? " " + timeVal : ""),
               ["calendar"],
             );
-          } catch (e) {
+          } catch {
             // ignore
           }
         }
