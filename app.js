@@ -232,6 +232,187 @@
       { time: "20:00", title: "閱讀時間", duration: "60m", type: "personal" },
     ],
 
+    calendarFull: (function () {
+      var d0 = new Date();
+      var fmt = function (d) {
+        return d.toISOString().slice(0, 10);
+      };
+      var ad = function (d, n) {
+        var r = new Date(d);
+        r.setDate(r.getDate() + n);
+        return r;
+      };
+      return [
+        // Yesterday
+        {
+          date: fmt(ad(d0, -1)),
+          time: "14:00",
+          summary: "週報回顧",
+          location: "",
+          attendees: "",
+          type: "work",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(ad(d0, -1)),
+          time: "19:00",
+          summary: "晚跑 5km",
+          location: "公園",
+          attendees: "",
+          type: "health",
+          source: "mock",
+          allDay: false,
+        },
+        // Today
+        {
+          date: fmt(d0),
+          time: "09:00",
+          summary: "站立會議 standup",
+          location: "辦公室",
+          attendees: "團隊",
+          type: "meeting",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(d0),
+          time: "11:30",
+          summary: "語言課程複習",
+          location: "",
+          attendees: "",
+          type: "study",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(d0),
+          time: "14:00",
+          summary: "投資人電話 — Series A",
+          location: "Zoom",
+          attendees: "Alex Chen",
+          type: "important",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(d0),
+          time: "18:00",
+          summary: "HIIT 訓練",
+          location: "健身房",
+          attendees: "",
+          type: "health",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(d0),
+          time: "20:00",
+          summary: "閱讀時間",
+          location: "",
+          attendees: "",
+          type: "personal",
+          source: "mock",
+          allDay: false,
+        },
+        // Tomorrow
+        {
+          date: fmt(ad(d0, 1)),
+          time: "全天",
+          summary: "Q1 復盤準備",
+          location: "",
+          attendees: "",
+          type: "work",
+          source: "mock",
+          allDay: true,
+        },
+        {
+          date: fmt(ad(d0, 1)),
+          time: "10:00",
+          summary: "產品評審會議",
+          location: "會議室 A",
+          attendees: "產品團隊",
+          type: "meeting",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(ad(d0, 1)),
+          time: "15:30",
+          summary: "日語口語練習",
+          location: "",
+          attendees: "",
+          type: "study",
+          source: "mock",
+          allDay: false,
+        },
+        // Day +2
+        {
+          date: fmt(ad(d0, 2)),
+          time: "09:30",
+          summary: "醫療體檢",
+          location: "醫院",
+          attendees: "",
+          type: "health",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(ad(d0, 2)),
+          time: "14:00",
+          summary: "技術分享：AI 工具鏈",
+          location: "線上",
+          attendees: "",
+          type: "study",
+          source: "mock",
+          allDay: false,
+        },
+        // Day +3
+        {
+          date: fmt(ad(d0, 3)),
+          time: "11:00",
+          summary: "合同簽署",
+          location: "律師事務所",
+          attendees: "法務",
+          type: "important",
+          source: "mock",
+          allDay: false,
+        },
+        {
+          date: fmt(ad(d0, 3)),
+          time: "19:30",
+          summary: "朋友聚餐",
+          location: "日料",
+          attendees: "小明, 小紅",
+          type: "personal",
+          source: "mock",
+          allDay: false,
+        },
+        // Day +5
+        {
+          date: fmt(ad(d0, 5)),
+          time: "09:00",
+          summary: "季度 OKR 回顧",
+          location: "線上",
+          attendees: "全員",
+          type: "meeting",
+          source: "mock",
+          allDay: false,
+        },
+        // Day +6
+        {
+          date: fmt(ad(d0, 6)),
+          time: "全天",
+          summary: "週末休息日",
+          location: "",
+          attendees: "",
+          type: "personal",
+          source: "mock",
+          allDay: true,
+        },
+      ];
+    })(),
+
     usageHistory: [1200, 890, 2100, 1560, 3200, 1890, 2450], // last 7 days tokens (k)
 
     chatHistory: [
@@ -245,7 +426,7 @@
 
   // ─── Hash Router ──────────────────────────────────────────────────────────
 
-  const pages = new Set(["dashboard", "chat", "tasks", "capture", "settings"]);
+  const pages = new Set(["dashboard", "chat", "tasks", "calendar", "capture", "settings"]);
   let currentPage = "dashboard";
 
   function navigateTo(page) {
@@ -281,6 +462,9 @@
         /* chat is maintained */ break;
       case "tasks":
         renderTasks();
+        break;
+      case "calendar":
+        void renderCalendar();
         break;
       case "capture":
         renderCaptureHistory();
@@ -395,7 +579,7 @@
     drawUsageChart();
 
     // Calendar
-    renderCalendarCards();
+    void renderCalendarCards();
 
     // Task highlights
     renderTaskHighlights();
@@ -459,29 +643,487 @@
 
   // ─── Calendar Cards ───────────────────────────────────────────────────────
 
-  function renderCalendarCards() {
+  async function renderCalendarCards() {
     const container = document.getElementById("calendar-list");
     if (!container) {
       return;
     }
-    const events = MOCK.calendar;
-    const typeIcon = { meeting: "🤝", important: "⭐", study: "📚", health: "🏃", personal: "🧘" };
 
-    container.innerHTML = events
+    let events;
+    try {
+      events = await fetchCalendarData();
+    } catch (e) {
+      events = MOCK.calendarFull;
+    }
+
+    // Filter today's events
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let todayEvents = events.filter(function (ev) {
+      return ev.date === todayStr;
+    });
+
+    // Fallback to first 3 mock events if nothing for today
+    if (todayEvents.length === 0 && cfg.mode !== "live") {
+      todayEvents = MOCK.calendar.slice(0, 3).map(function (ev) {
+        return { time: ev.time, summary: ev.title, type: ev.type, source: "mock", allDay: false };
+      });
+    }
+
+    if (todayEvents.length === 0) {
+      container.innerHTML =
+        '<div class="empty-state" style="padding:1rem 0">今日無行程</div>';
+      return;
+    }
+
+    const typeIcon = {
+      meeting: "🤝",
+      important: "⭐",
+      study: "📚",
+      health: "🏃",
+      personal: "🧘",
+      work: "💼",
+    };
+
+    container.innerHTML = todayEvents
       .slice(0, 3)
       .map(function (ev) {
         const icon = typeIcon[ev.type] || "📅";
+        const timeStr = ev.allDay ? "全天" : ev.time || "";
         return `
         <div class="list-card">
           <div class="list-card-icon">${icon}</div>
           <div class="list-card-body">
-            <div class="list-card-title">${ev.title}</div>
-            <div class="list-card-sub">${ev.time} · ${ev.duration}</div>
+            <div class="list-card-title">${escapeHtml(ev.summary || ev.title || "")}</div>
+            <div class="list-card-sub">${escapeHtml(timeStr)}</div>
           </div>
         </div>
       `;
       })
       .join("");
+  }
+
+  // ─── Calendar Helpers ─────────────────────────────────────────────────────
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function inferEventType(summary) {
+    var s = (summary || "").toLowerCase();
+    if (/會議|meeting|standup|討論|評審|合同|簽署|電話|call/.test(s)) return "meeting";
+    if (/投資|investor|series|融資|ipo|重要|urgent/.test(s)) return "important";
+    if (/課程|學習|複習|英語|日語|日文|語言|閱讀|讀書|study|learn/.test(s)) return "study";
+    if (/健身|跑步|運動|健康|gym|hiit|瑜伽|yoga|訓練|體檢|medical/.test(s)) return "health";
+    return "personal";
+  }
+
+  function parseCalendarMarkdown(content) {
+    var lines = content.split("\n");
+    var events = [];
+    var headerFound = false;
+    var colMap = {};
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line.startsWith("|")) continue;
+
+      var cells = line
+        .split("|")
+        .map(function (c) {
+          return c.trim();
+        })
+        .slice(1, -1); // remove empty first and last
+
+      // Skip separator lines (contains ---)
+      if (
+        cells.every(function (c) {
+          return /^[-:]+$/.test(c);
+        })
+      )
+        continue;
+
+      if (!headerFound) {
+        cells.forEach(function (c, idx) {
+          colMap[c.toLowerCase()] = idx;
+        });
+        headerFound = true;
+        continue;
+      }
+
+      var get = function (name) {
+        var idx = colMap[name];
+        return idx !== undefined ? cells[idx] || "" : "";
+      };
+
+      var date = get("date") || get("日期");
+      var time = get("time") || get("時間");
+      var summary = get("summary") || get("標題") || get("title") || get("event");
+      var location = get("location") || get("地點");
+      var attendees = get("attendees") || get("參與者");
+
+      if (!date || !summary) continue;
+
+      var allDay = time === "全天" || time === "-" || time === "" || time === "all day";
+
+      events.push({
+        date: date,
+        time: allDay ? "全天" : time,
+        summary: summary,
+        location: location,
+        attendees: attendees,
+        type: inferEventType(summary),
+        source: "feishu",
+        allDay: allDay,
+      });
+    }
+
+    events.sort(function (a, b) {
+      if (a.date < b.date) return -1;
+      if (a.date > b.date) return 1;
+      if (a.allDay && !b.allDay) return -1;
+      if (!a.allDay && b.allDay) return 1;
+      return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
+    });
+
+    return events;
+  }
+
+  function getLocalCalendarEvents() {
+    try {
+      return JSON.parse(localStorage.getItem("kw_calendar_events") || "[]");
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function addLocalCalendarEvent(ev) {
+    var events = getLocalCalendarEvents();
+    var item = {
+      id: Date.now(),
+      date: ev.date,
+      time: ev.time || "全天",
+      summary: ev.summary,
+      location: "",
+      attendees: "",
+      type: inferEventType(ev.summary),
+      source: "local",
+      allDay: !ev.time || ev.time === "全天",
+    };
+    events.push(item);
+    try {
+      localStorage.setItem("kw_calendar_events", JSON.stringify(events.slice(-100)));
+    } catch (e) {}
+    return item;
+  }
+
+  function deleteLocalCalendarEvent(id) {
+    var events = getLocalCalendarEvents().filter(function (e) {
+      return e.id !== id;
+    });
+    try {
+      localStorage.setItem("kw_calendar_events", JSON.stringify(events));
+    } catch (e) {}
+  }
+
+  var calendarCache = null;
+  var calendarCacheTs = 0;
+  var CAL_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  async function fetchCalendarData() {
+    var localEvents = getLocalCalendarEvents();
+    var remoteEvents = [];
+
+    if (cfg.mode === "live" && getAPI()) {
+      var now = Date.now();
+      if (calendarCache && now - calendarCacheTs < CAL_CACHE_TTL) {
+        remoteEvents = calendarCache;
+      } else {
+        try {
+          var result = await getAPI().getWorkspaceFile(
+            "automation/assistant_hub/02_work/calendar.md",
+          );
+          var content = (result && result.content) || "";
+          if (content) {
+            remoteEvents = parseCalendarMarkdown(content);
+            calendarCache = remoteEvents;
+            calendarCacheTs = now;
+          }
+        } catch (e) {
+          console.warn("fetchCalendarData failed:", e);
+        }
+      }
+    } else {
+      remoteEvents = MOCK.calendarFull;
+    }
+
+    var all = remoteEvents.concat(localEvents);
+    all.sort(function (a, b) {
+      if (a.date < b.date) return -1;
+      if (a.date > b.date) return 1;
+      if (a.allDay && !b.allDay) return -1;
+      if (!a.allDay && b.allDay) return 1;
+      return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
+    });
+
+    return all;
+  }
+
+  // ─── Calendar Page Renderer ───────────────────────────────────────────────
+
+  var calendarView = "today";
+
+  async function renderCalendar() {
+    // Set today date in header
+    var todayEl = document.getElementById("cal-today-date");
+    if (todayEl) {
+      var now = new Date();
+      todayEl.textContent = now.toLocaleDateString("zh-TW", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+      });
+    }
+
+    // Preset today's date in add form if empty
+    var addDateEl = document.getElementById("cal-add-date");
+    if (addDateEl && !addDateEl.value) {
+      addDateEl.value = new Date().toISOString().slice(0, 10);
+    }
+
+    var events = await fetchCalendarData();
+    renderCalendarHero(events);
+    renderCalendarTimeline(events, calendarView);
+  }
+
+  function renderCalendarHero(events) {
+    var container = document.getElementById("cal-hero");
+    if (!container) return;
+
+    var now = new Date();
+    var todayStr = now.toISOString().slice(0, 10);
+    var nowTime = now.getHours() * 60 + now.getMinutes();
+
+    // Find next upcoming event
+    var next = null;
+    for (var i = 0; i < events.length; i++) {
+      var ev = events[i];
+      if (ev.allDay) continue;
+      if (ev.date > todayStr) {
+        next = ev;
+        break;
+      }
+      if (ev.date === todayStr) {
+        var parts = (ev.time || "00:00").split(":");
+        var evMin = parseInt(parts[0] || "0") * 60 + parseInt(parts[1] || "0");
+        if (evMin > nowTime) {
+          next = ev;
+          break;
+        }
+      }
+    }
+
+    if (!next) {
+      container.innerHTML = `
+        <div class="cal-hero-card fade-in">
+          <div class="cal-hero-label">NEXT UP</div>
+          <div class="cal-hero-title" style="color:var(--lp-muted)">今日行程已全部完成 ✨</div>
+          <div class="cal-hero-meta">明日繼續加油</div>
+        </div>`;
+      return;
+    }
+
+    // Countdown
+    var evDate = new Date(next.date + "T" + next.time + ":00");
+    var diffMs = evDate - now;
+    var diffMin = Math.round(diffMs / 60000);
+    var countdownStr;
+    if (diffMin < 60) {
+      countdownStr = diffMin + " 分後";
+    } else if (diffMin < 1440) {
+      countdownStr = Math.floor(diffMin / 60) + " 小時後";
+    } else {
+      countdownStr = Math.floor(diffMin / 1440) + " 天後";
+    }
+
+    var typeColors = {
+      meeting: "#3b82f6",
+      important: "#f59e0b",
+      study: "#a78bfa",
+      health: "#14b8a6",
+      personal: "#f472b6",
+      work: "#3b82f6",
+    };
+    var borderColor = typeColors[next.type] || "var(--lp-amber)";
+
+    container.innerHTML = `
+      <div class="cal-hero-card fade-in" style="border-left-color:${borderColor}">
+        <div class="cal-hero-label">NEXT UP</div>
+        <div class="cal-hero-time">${escapeHtml(next.time)}</div>
+        <div class="cal-hero-title">${escapeHtml(next.summary)}</div>
+        <div class="cal-hero-meta">
+          ${next.location ? "📍 " + escapeHtml(next.location) + "&ensp;" : ""}
+          <span class="cal-countdown">${countdownStr}</span>
+        </div>
+      </div>`;
+  }
+
+  function renderCalendarTimeline(events, view) {
+    var container = document.getElementById("cal-timeline");
+    if (!container) return;
+
+    var now = new Date();
+    var todayStr = now.toISOString().slice(0, 10);
+    var nowTime = now.getHours() * 60 + now.getMinutes();
+
+    // Filter by view
+    var filtered;
+    if (view === "today") {
+      filtered = events.filter(function (ev) {
+        return ev.date === todayStr;
+      });
+    } else if (view === "week") {
+      var weekEnd = new Date(now);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      var weekEndStr = weekEnd.toISOString().slice(0, 10);
+      filtered = events.filter(function (ev) {
+        return ev.date >= todayStr && ev.date <= weekEndStr;
+      });
+    } else {
+      filtered = events.slice();
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML =
+        '<div class="empty-state"><div class="empty-state-icon">📅</div>暫無行程</div>';
+      return;
+    }
+
+    // Group by date
+    var groups = {};
+    var groupOrder = [];
+    filtered.forEach(function (ev) {
+      if (!groups[ev.date]) {
+        groups[ev.date] = [];
+        groupOrder.push(ev.date);
+      }
+      groups[ev.date].push(ev);
+    });
+
+    var html = "";
+    var delay = 0;
+
+    groupOrder.forEach(function (dateStr) {
+      var dayEvents = groups[dateStr];
+      var isToday = dateStr === todayStr;
+
+      // Day header
+      var dateObj = new Date(dateStr + "T12:00:00");
+      var dateLabel = dateObj.toLocaleDateString("zh-TW", {
+        month: "numeric",
+        day: "numeric",
+        weekday: "short",
+      });
+      html += `<div class="cal-day-header">
+        ${escapeHtml(dateLabel)}
+        ${isToday ? '<span class="cal-day-today-pill">TODAY</span>' : ""}
+      </div>`;
+
+      var nowLineInserted = false;
+
+      dayEvents.forEach(function (ev) {
+        // Insert NOW indicator before first future event today
+        if (isToday && !nowLineInserted && !ev.allDay) {
+          var pts = (ev.time || "00:00").split(":");
+          var evMin = parseInt(pts[0] || "0") * 60 + parseInt(pts[1] || "0");
+          if (evMin > nowTime) {
+            nowLineInserted = true;
+            var nowLabel = now.toLocaleTimeString("zh-TW", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            });
+            html += `<div class="cal-now-line">
+              <div class="cal-now-dot"></div>
+              <div class="cal-now-bar"></div>
+              <div class="cal-now-label">${escapeHtml(nowLabel)}</div>
+            </div>`;
+          }
+        }
+
+        // Is past?
+        var isPast = false;
+        if (!ev.allDay) {
+          if (ev.date < todayStr) {
+            isPast = true;
+          } else if (ev.date === todayStr) {
+            var pts2 = (ev.time || "00:00").split(":");
+            var evMin2 = parseInt(pts2[0] || "0") * 60 + parseInt(pts2[1] || "0");
+            isPast = evMin2 < nowTime;
+          }
+        }
+
+        // Source badge
+        var badgeClass =
+          ev.source === "feishu"
+            ? "cal-badge-feishu"
+            : ev.source === "local"
+              ? "cal-badge-local"
+              : ev.source === "queue"
+                ? "cal-badge-queue"
+                : "cal-badge-mock";
+        var badgeLabel =
+          ev.source === "feishu"
+            ? "飛書"
+            : ev.source === "local"
+              ? "本地"
+              : ev.source === "queue"
+                ? "Queue"
+                : "Demo";
+
+        var deleteBtn =
+          ev.source === "local"
+            ? `<button class="cal-delete-btn" data-del-id="${ev.id}" aria-label="刪除事件" title="刪除">✕</button>`
+            : "";
+
+        var sub = "";
+        if (ev.location) sub += "📍 " + escapeHtml(ev.location);
+        if (ev.attendees) sub += (sub ? " · " : "") + escapeHtml(ev.attendees);
+
+        var animDelay = Math.min(delay * 0.06, 0.8);
+
+        html += `<div class="cal-event fade-in ${isPast ? "cal-event-past" : ""}" data-type="${escapeHtml(ev.type || "personal")}" style="animation-delay:${animDelay}s" role="listitem">
+          <div class="cal-event-time">${escapeHtml(ev.allDay ? "全天" : ev.time)}</div>
+          <div class="cal-event-body">
+            <div class="cal-event-title">${escapeHtml(ev.summary)}</div>
+            ${sub ? `<div class="cal-event-sub">${sub}</div>` : ""}
+          </div>
+          <div class="cal-event-meta">
+            <span class="cal-badge ${badgeClass}">${badgeLabel}</span>
+            ${deleteBtn}
+          </div>
+        </div>`;
+
+        delay++;
+      });
+    });
+
+    container.innerHTML = html;
+
+    // Bind delete buttons
+    container.querySelectorAll(".cal-delete-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = parseInt(btn.dataset.delId);
+        if (id) {
+          deleteLocalCalendarEvent(id);
+          calendarCache = null;
+          void renderCalendar();
+        }
+      });
+    });
   }
 
   // ─── Task Highlights (Dashboard) ──────────────────────────────────────────
@@ -898,10 +1540,10 @@
       });
     });
 
-    // Filter tabs (Tasks page)
-    document.querySelectorAll(".filter-tab").forEach(function (tab) {
+    // Filter tabs (Tasks page) — exclude calendar view tabs
+    document.querySelectorAll(".filter-tab:not([data-cal-view])").forEach(function (tab) {
       tab.addEventListener("click", function () {
-        document.querySelectorAll(".filter-tab").forEach(function (t) {
+        document.querySelectorAll(".filter-tab:not([data-cal-view])").forEach(function (t) {
           t.classList.remove("active");
         });
         tab.classList.add("active");
@@ -909,6 +1551,68 @@
         renderTasks();
       });
     });
+
+    // Calendar view tabs
+    document.querySelectorAll("[data-cal-view]").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        document.querySelectorAll("[data-cal-view]").forEach(function (t) {
+          t.classList.remove("active");
+          t.setAttribute("aria-selected", "false");
+        });
+        tab.classList.add("active");
+        tab.setAttribute("aria-selected", "true");
+        calendarView = tab.dataset.calView || "today";
+        void renderCalendar();
+      });
+    });
+
+    // Dashboard "查看全部" → jump to calendar page
+    var calViewAll = document.getElementById("cal-view-all");
+    if (calViewAll) {
+      calViewAll.addEventListener("click", function () {
+        location.hash = "calendar";
+        navigateTo("calendar");
+      });
+    }
+
+    // Calendar quick-add button
+    var calAddBtn = document.getElementById("cal-add-btn");
+    if (calAddBtn) {
+      calAddBtn.addEventListener("click", async function () {
+        var dateEl = document.getElementById("cal-add-date");
+        var timeEl = document.getElementById("cal-add-time");
+        var titleEl = document.getElementById("cal-add-title");
+        var dateVal = dateEl ? dateEl.value : "";
+        var timeVal = timeEl ? timeEl.value : "";
+        var titleVal = titleEl ? titleEl.value.trim() : "";
+
+        if (!titleVal) {
+          if (titleEl) titleEl.focus();
+          return;
+        }
+        if (!dateVal) {
+          dateVal = new Date().toISOString().slice(0, 10);
+        }
+
+        addLocalCalendarEvent({ date: dateVal, time: timeVal, summary: titleVal });
+
+        if (titleEl) titleEl.value = "";
+
+        // Fire-and-forget notify Kairo
+        if (cfg.mode === "live" && getAPI()) {
+          try {
+            await getAPI().sendCapture(
+              "新行程: " + titleVal + " @ " + dateVal + (timeVal ? " " + timeVal : ""),
+              ["calendar"],
+            );
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        void renderCalendar();
+      });
+    }
 
     // Tag buttons (Capture page)
     document.querySelectorAll(".tag-btn").forEach(function (btn) {

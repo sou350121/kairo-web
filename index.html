@@ -1,1300 +1,1901 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Kairo">
-  <meta name="theme-color" content="#0a0f1e">
-  <meta name="description" content="Kairo — 個人全能 AI 指揮中心">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <title>Kairo — AI 指揮中心</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Kairo" />
+    <meta name="theme-color" content="#0a0f1e" />
+    <meta name="description" content="Kairo — 個人全能 AI 指揮中心" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <title>Kairo — AI 指揮中心</title>
 
-  <!-- Google Fonts preconnect -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <style>
-    /* ===========================
+    <style>
+      /* ===========================
        Design Tokens
     =========================== */
-    :root {
-      --lp-bg: #0a0f1e;
-      --lp-bg-surface: #12141a;
-      --lp-bg-card: #1a1d25;
-      --lp-text: #e4e4e7;
-      --lp-text-strong: #fafafa;
-      --lp-muted: #71717a;
-      --lp-border: rgba(245,158,11,0.15);
-      --lp-amber: #f59e0b;
-      --lp-orange: #f97316;
-      --lp-teal: #14b8a6;
-      --lp-blue: #3b82f6;
-      --lp-glow: rgba(245,158,11,0.2);
-      --lp-radius: 8px;
-      --lp-radius-lg: 16px;
-      --lp-font: "Sora", -apple-system, "Noto Sans SC", sans-serif;
-      --lp-mono: "JetBrains Mono", ui-monospace, monospace;
-    }
+      :root {
+        --lp-bg: #0a0f1e;
+        --lp-bg-surface: #12141a;
+        --lp-bg-card: #1a1d25;
+        --lp-text: #e4e4e7;
+        --lp-text-strong: #fafafa;
+        --lp-muted: #71717a;
+        --lp-border: rgba(245, 158, 11, 0.15);
+        --lp-amber: #f59e0b;
+        --lp-orange: #f97316;
+        --lp-teal: #14b8a6;
+        --lp-blue: #3b82f6;
+        --lp-glow: rgba(245, 158, 11, 0.2);
+        --lp-radius: 8px;
+        --lp-radius-lg: 16px;
+        --lp-font: "Sora", -apple-system, "Noto Sans SC", sans-serif;
+        --lp-mono: "JetBrains Mono", ui-monospace, monospace;
+      }
 
-    /* ===========================
+      /* ===========================
        Reset & Base
     =========================== */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: var(--lp-font);
-      background: var(--lp-bg);
-      color: var(--lp-text);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow: hidden;
-    }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: var(--lp-font);
+        background: var(--lp-bg);
+        color: var(--lp-text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow: hidden;
+      }
 
-    a { color: inherit; text-decoration: none; }
-    button { font-family: var(--lp-font); cursor: pointer; }
-    textarea, input { font-family: var(--lp-font); }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        font-family: var(--lp-font);
+        cursor: pointer;
+      }
+      textarea,
+      input {
+        font-family: var(--lp-font);
+      }
 
-    /* ===========================
+      /* ===========================
        Welcome Screen
     =========================== */
-    #welcome-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: var(--lp-bg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.5rem;
-      padding: 2rem;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-    }
-    #welcome-screen.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
+      #welcome-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: var(--lp-bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 2rem;
+        transition:
+          opacity 0.4s ease,
+          visibility 0.4s ease;
+      }
+      #welcome-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
 
-    .welcome-logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
+      .welcome-logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    .welcome-wordmark {
-      font-size: 3rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, var(--lp-amber) 0%, var(--lp-orange) 60%, #fbbf24 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-    }
+      .welcome-wordmark {
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--lp-amber) 0%, var(--lp-orange) 60%, #fbbf24 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+      }
 
-    .welcome-subtitle {
-      font-size: 0.9rem;
-      color: var(--lp-muted);
-      text-align: center;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-    }
+      .welcome-subtitle {
+        font-size: 0.9rem;
+        color: var(--lp-muted);
+        text-align: center;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+      }
 
-    #welcome-particles {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      opacity: 0.7;
-    }
+      #welcome-particles {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        opacity: 0.7;
+      }
 
-    .welcome-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-      width: 100%;
-      max-width: 320px;
-    }
+      .welcome-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        width: 100%;
+        max-width: 320px;
+      }
 
-    #btn-demo {
-      width: 100%;
-      padding: 0.9rem;
-      border-radius: var(--lp-radius-lg);
-      background: transparent;
-      border: 2px solid var(--lp-amber);
-      color: var(--lp-amber);
-      font-weight: 700;
-      font-size: 0.95rem;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    #btn-demo:active {
-      background: rgba(245,158,11,0.1);
-    }
+      #btn-demo {
+        width: 100%;
+        padding: 0.9rem;
+        border-radius: var(--lp-radius-lg);
+        background: transparent;
+        border: 2px solid var(--lp-amber);
+        color: var(--lp-amber);
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition:
+          background 0.2s,
+          box-shadow 0.2s;
+      }
+      #btn-demo:active {
+        background: rgba(245, 158, 11, 0.1);
+      }
 
-    #btn-connect {
-      width: 100%;
-      padding: 0.9rem;
-      border-radius: var(--lp-radius-lg);
-      background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
-      border: none;
-      color: #0a0f1e;
-      font-weight: 700;
-      font-size: 0.95rem;
-      box-shadow: 0 4px 20px var(--lp-glow);
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    #btn-connect:active {
-      transform: scale(0.97);
-      box-shadow: 0 2px 10px var(--lp-glow);
-    }
+      #btn-connect {
+        width: 100%;
+        padding: 0.9rem;
+        border-radius: var(--lp-radius-lg);
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        border: none;
+        color: #0a0f1e;
+        font-weight: 700;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 20px var(--lp-glow);
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      #btn-connect:active {
+        transform: scale(0.97);
+        box-shadow: 0 2px 10px var(--lp-glow);
+      }
 
-    /* ===========================
+      /* ===========================
        App Root
     =========================== */
-    #app-root {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    #app-root.hidden {
-      display: none;
-    }
+      #app-root {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      #app-root.hidden {
+        display: none;
+      }
 
-    /* ===========================
+      /* ===========================
        Pages
     =========================== */
-    #pages {
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    }
+      #pages {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
 
-    .page {
-      position: absolute;
-      inset: 0;
-      overflow-y: auto;
-      padding: 1rem 1rem calc(56px + env(safe-area-inset-bottom) + 1rem);
-      opacity: 0;
-      transform: translateX(20px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      pointer-events: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    .page.active {
-      opacity: 1;
-      transform: translateX(0);
-      pointer-events: auto;
-    }
+      .page {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        padding: 1rem 1rem calc(56px + env(safe-area-inset-bottom) + 1rem);
+        opacity: 0;
+        transform: translateX(20px);
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        pointer-events: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .page.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+      }
 
-    /* ===========================
+      /* ===========================
        Page Header
     =========================== */
-    .page-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.25rem;
-      padding-top: env(safe-area-inset-top, 0.5rem);
-    }
-    .page-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--lp-text-strong);
-    }
-    .page-title-amber {
-      background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        padding-top: env(safe-area-inset-top, 0.5rem);
+      }
+      .page-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--lp-text-strong);
+      }
+      .page-title-amber {
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
 
-    /* ===========================
+      /* ===========================
        Metrics Grid
     =========================== */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-    }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+      }
 
-    .metric-card {
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      padding: 1rem 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .metric-card:hover {
-      border-color: var(--lp-amber);
-      box-shadow: 0 4px 20px var(--lp-glow);
-    }
+      .metric-card {
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        padding: 1rem 0.85rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .metric-card:hover {
+        border-color: var(--lp-amber);
+        box-shadow: 0 4px 20px var(--lp-glow);
+      }
 
-    .mc-icon { font-size: 1.3rem; margin-bottom: 0.25rem; }
-    .mc-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--lp-text-strong);
-      font-variant-numeric: tabular-nums;
-      font-family: var(--lp-mono);
-    }
-    .mc-label { font-size: 0.72rem; color: var(--lp-muted); font-weight: 500; }
-    .mc-sub { font-size: 0.7rem; color: var(--lp-amber); }
+      .mc-icon {
+        font-size: 1.3rem;
+        margin-bottom: 0.25rem;
+      }
+      .mc-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--lp-text-strong);
+        font-variant-numeric: tabular-nums;
+        font-family: var(--lp-mono);
+      }
+      .mc-label {
+        font-size: 0.72rem;
+        color: var(--lp-muted);
+        font-weight: 500;
+      }
+      .mc-sub {
+        font-size: 0.7rem;
+        color: var(--lp-amber);
+      }
 
-    .mc-dots {
-      display: flex;
-      gap: 0.35rem;
-      align-items: center;
-      margin-top: 0.2rem;
-    }
+      .mc-dots {
+        display: flex;
+        gap: 0.35rem;
+        align-items: center;
+        margin-top: 0.2rem;
+      }
 
-    .status-dot-sm {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--lp-teal);
-      box-shadow: 0 0 6px var(--lp-teal);
-      animation: pulse-dot 2s infinite;
-    }
-    .status-dot-sm.offline {
-      background: #ef4444;
-      box-shadow: 0 0 6px #ef4444;
-      animation: none;
-    }
+      .status-dot-sm {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--lp-teal);
+        box-shadow: 0 0 6px var(--lp-teal);
+        animation: pulse-dot 2s infinite;
+      }
+      .status-dot-sm.offline {
+        background: #ef4444;
+        box-shadow: 0 0 6px #ef4444;
+        animation: none;
+      }
 
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
 
-    /* ===========================
+      /* ===========================
        Section Headers
     =========================== */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 1.25rem 0 0.6rem;
-    }
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 1.25rem 0 0.6rem;
+      }
 
-    .sh-label {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--lp-amber);
-    }
+      .sh-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--lp-amber);
+      }
 
-    .sh-action {
-      font-size: 0.72rem;
-      color: var(--lp-muted);
-      cursor: pointer;
-    }
-    .sh-action:hover { color: var(--lp-amber); }
+      .sh-action {
+        font-size: 0.72rem;
+        color: var(--lp-muted);
+        cursor: pointer;
+      }
+      .sh-action:hover {
+        color: var(--lp-amber);
+      }
 
-    /* ===========================
+      /* ===========================
        Chart
     =========================== */
-    .chart-wrap {
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      padding: 1rem;
-      margin-bottom: 0.5rem;
-    }
+      .chart-wrap {
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+      }
 
-    #usage-chart {
-      width: 100%;
-      display: block;
-    }
+      #usage-chart {
+        width: 100%;
+        display: block;
+      }
 
-    /* ===========================
+      /* ===========================
        Card List (reusable)
     =========================== */
-    .card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
+      .card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
 
-    .list-card {
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius);
-      padding: 0.85rem 1rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      transition: border-color 0.2s;
-    }
-    .list-card:hover { border-color: rgba(245,158,11,0.3); }
+      .list-card {
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius);
+        padding: 0.85rem 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        transition: border-color 0.2s;
+      }
+      .list-card:hover {
+        border-color: rgba(245, 158, 11, 0.3);
+      }
 
-    .list-card-icon {
-      font-size: 1.1rem;
-      flex-shrink: 0;
-      padding-top: 0.1rem;
-    }
-    .list-card-body {
-      flex: 1;
-      min-width: 0;
-    }
-    .list-card-title {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--lp-text-strong);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .list-card-sub {
-      font-size: 0.75rem;
-      color: var(--lp-muted);
-      margin-top: 0.15rem;
-    }
-    .list-card-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 0.15rem 0.45rem;
-      border-radius: 999px;
-      flex-shrink: 0;
-      align-self: center;
-    }
+      .list-card-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        padding-top: 0.1rem;
+      }
+      .list-card-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .list-card-title {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--lp-text-strong);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .list-card-sub {
+        font-size: 0.75rem;
+        color: var(--lp-muted);
+        margin-top: 0.15rem;
+      }
+      .list-card-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+        flex-shrink: 0;
+        align-self: center;
+      }
 
-    .badge-high {
-      background: rgba(239,68,68,0.15);
-      color: #ef4444;
-      border: 1px solid rgba(239,68,68,0.3);
-    }
-    .badge-med {
-      background: rgba(245,158,11,0.15);
-      color: var(--lp-amber);
-      border: 1px solid rgba(245,158,11,0.3);
-    }
-    .badge-low {
-      background: rgba(113,113,122,0.15);
-      color: var(--lp-muted);
-      border: 1px solid rgba(113,113,122,0.2);
-    }
-    .badge-done {
-      background: rgba(20,184,166,0.15);
-      color: var(--lp-teal);
-      border: 1px solid rgba(20,184,166,0.3);
-    }
+      .badge-high {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .badge-med {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--lp-amber);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .badge-low {
+        background: rgba(113, 113, 122, 0.15);
+        color: var(--lp-muted);
+        border: 1px solid rgba(113, 113, 122, 0.2);
+      }
+      .badge-done {
+        background: rgba(20, 184, 166, 0.15);
+        color: var(--lp-teal);
+        border: 1px solid rgba(20, 184, 166, 0.3);
+      }
 
-    /* ===========================
+      /* ===========================
        Kairo News Card
     =========================== */
-    .kairo-news-card {
-      background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(249,115,22,0.04));
-      border: 1px solid rgba(245,158,11,0.2);
-      border-radius: var(--lp-radius-lg);
-      padding: 1rem;
-      font-size: 0.85rem;
-      line-height: 1.6;
-      color: var(--lp-text);
-    }
-    .kairo-news-card .kn-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-    .kn-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      flex-shrink: 0;
-    }
-    .kn-name {
-      font-weight: 600;
-      font-size: 0.82rem;
-      color: var(--lp-amber);
-    }
-    .kn-time {
-      font-size: 0.7rem;
-      color: var(--lp-muted);
-      margin-left: auto;
-    }
+      .kairo-news-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(249, 115, 22, 0.04));
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: var(--lp-radius-lg);
+        padding: 1rem;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: var(--lp-text);
+      }
+      .kairo-news-card .kn-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .kn-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+      .kn-name {
+        font-weight: 600;
+        font-size: 0.82rem;
+        color: var(--lp-amber);
+      }
+      .kn-time {
+        font-size: 0.7rem;
+        color: var(--lp-muted);
+        margin-left: auto;
+      }
 
-    /* ===========================
+      /* ===========================
        Chat Page
     =========================== */
-    #page-chat {
-      display: flex;
-      flex-direction: column;
-    }
+      #page-chat {
+        display: flex;
+        flex-direction: column;
+      }
 
-    .chat-container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      height: 100%;
-    }
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
+      }
 
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      padding-bottom: 0.5rem;
-      -webkit-overflow-scrolling: touch;
-    }
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+      }
 
-    .chat-bubble {
-      max-width: 82%;
-      padding: 0.7rem 1rem;
-      border-radius: var(--lp-radius-lg);
-      font-size: 0.88rem;
-      line-height: 1.55;
-    }
-    .bubble-user {
-      background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
-      color: #0a0f1e;
-      font-weight: 500;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
-    }
-    .bubble-bot {
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      color: var(--lp-text);
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
-    }
-    .bubble-time {
-      font-size: 0.65rem;
-      color: var(--lp-muted);
-      margin-top: 0.2rem;
-    }
-    .bubble-user-wrap { align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; }
-    .bubble-bot-wrap { align-self: flex-start; display: flex; flex-direction: column; align-items: flex-start; }
+      .chat-bubble {
+        max-width: 82%;
+        padding: 0.7rem 1rem;
+        border-radius: var(--lp-radius-lg);
+        font-size: 0.88rem;
+        line-height: 1.55;
+      }
+      .bubble-user {
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        color: #0a0f1e;
+        font-weight: 500;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }
+      .bubble-bot {
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        color: var(--lp-text);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+      }
+      .bubble-time {
+        font-size: 0.65rem;
+        color: var(--lp-muted);
+        margin-top: 0.2rem;
+      }
+      .bubble-user-wrap {
+        align-self: flex-end;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+      .bubble-bot-wrap {
+        align-self: flex-start;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
 
-    .typing-indicator {
-      display: flex;
-      gap: 4px;
-      padding: 0.7rem 1rem;
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      width: fit-content;
-      border-bottom-left-radius: 4px;
-      align-self: flex-start;
-    }
-    .typing-indicator span {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--lp-muted);
-      animation: typing 1.2s infinite;
-    }
-    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+      .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 0.7rem 1rem;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        width: fit-content;
+        border-bottom-left-radius: 4px;
+        align-self: flex-start;
+      }
+      .typing-indicator span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--lp-muted);
+        animation: typing 1.2s infinite;
+      }
+      .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
 
-    @keyframes typing {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-5px); }
-    }
+      @keyframes typing {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+        }
+        30% {
+          transform: translateY(-5px);
+        }
+      }
 
-    .hidden { display: none !important; }
+      .hidden {
+        display: none !important;
+      }
 
-    .chat-input-area {
-      display: flex;
-      gap: 0.5rem;
-      align-items: flex-end;
-      padding: 0.75rem 0 0;
-      border-top: 1px solid var(--lp-border);
-      flex-shrink: 0;
-    }
+      .chat-input-area {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+        padding: 0.75rem 0 0;
+        border-top: 1px solid var(--lp-border);
+        flex-shrink: 0;
+      }
 
-    #chat-input {
-      flex: 1;
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      padding: 0.7rem 1rem;
-      color: var(--lp-text);
-      font-family: var(--lp-font);
-      font-size: 0.88rem;
-      resize: none;
-      outline: none;
-      max-height: 120px;
-      overflow-y: auto;
-      line-height: 1.5;
-    }
-    #chat-input:focus { border-color: var(--lp-amber); }
-    #chat-input::placeholder { color: var(--lp-muted); }
+      #chat-input {
+        flex: 1;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        padding: 0.7rem 1rem;
+        color: var(--lp-text);
+        font-family: var(--lp-font);
+        font-size: 0.88rem;
+        resize: none;
+        outline: none;
+        max-height: 120px;
+        overflow-y: auto;
+        line-height: 1.5;
+      }
+      #chat-input:focus {
+        border-color: var(--lp-amber);
+      }
+      #chat-input::placeholder {
+        color: var(--lp-muted);
+      }
 
-    .send-btn {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #0a0f1e;
-      flex-shrink: 0;
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 2px 12px var(--lp-glow);
-    }
-    .send-btn:active {
-      transform: scale(0.92);
-      box-shadow: 0 1px 6px var(--lp-glow);
-    }
-    .send-btn svg { width: 18px; height: 18px; }
+      .send-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0a0f1e;
+        flex-shrink: 0;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        box-shadow: 0 2px 12px var(--lp-glow);
+      }
+      .send-btn:active {
+        transform: scale(0.92);
+        box-shadow: 0 1px 6px var(--lp-glow);
+      }
+      .send-btn svg {
+        width: 18px;
+        height: 18px;
+      }
 
-    /* ===========================
+      /* ===========================
        Tasks Page
     =========================== */
-    .filter-tabs {
-      display: flex;
-      gap: 0.4rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
+      .filter-tabs {
+        display: flex;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
 
-    .filter-tab {
-      padding: 0.4rem 0.9rem;
-      border-radius: 999px;
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      color: var(--lp-muted);
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--lp-font);
-    }
-    .filter-tab.active {
-      background: rgba(245,158,11,0.15);
-      border-color: var(--lp-amber);
-      color: var(--lp-amber);
-    }
-    .filter-tab:hover:not(.active) {
-      border-color: rgba(245,158,11,0.3);
-      color: var(--lp-text);
-    }
+      .filter-tab {
+        padding: 0.4rem 0.9rem;
+        border-radius: 999px;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        color: var(--lp-muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: var(--lp-font);
+      }
+      .filter-tab.active {
+        background: rgba(245, 158, 11, 0.15);
+        border-color: var(--lp-amber);
+        color: var(--lp-amber);
+      }
+      .filter-tab:hover:not(.active) {
+        border-color: rgba(245, 158, 11, 0.3);
+        color: var(--lp-text);
+      }
 
-    .task-card-checkbox {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 2px solid var(--lp-border);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 0.1rem;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .task-card-checkbox.checked {
-      background: var(--lp-teal);
-      border-color: var(--lp-teal);
-    }
-    .task-card-checkbox.checked::after {
-      content: "✓";
-      font-size: 0.6rem;
-      color: #0a0f1e;
-      font-weight: 700;
-    }
+      .task-card-checkbox {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid var(--lp-border);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.1rem;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .task-card-checkbox.checked {
+        background: var(--lp-teal);
+        border-color: var(--lp-teal);
+      }
+      .task-card-checkbox.checked::after {
+        content: "✓";
+        font-size: 0.6rem;
+        color: #0a0f1e;
+        font-weight: 700;
+      }
 
-    /* ===========================
+      /* ===========================
        Capture Page
     =========================== */
-    .capture-form { display: flex; flex-direction: column; }
+      .capture-form {
+        display: flex;
+        flex-direction: column;
+      }
 
-    #capture-text {
-      width: 100%;
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      padding: 1rem;
-      color: var(--lp-text);
-      font-family: var(--lp-font);
-      font-size: 0.9rem;
-      resize: none;
-      outline: none;
-      margin-bottom: 0.75rem;
-      line-height: 1.6;
-    }
-    #capture-text:focus { border-color: var(--lp-amber); }
-    #capture-text::placeholder { color: var(--lp-muted); }
+      #capture-text {
+        width: 100%;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        padding: 1rem;
+        color: var(--lp-text);
+        font-family: var(--lp-font);
+        font-size: 0.9rem;
+        resize: none;
+        outline: none;
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+      }
+      #capture-text:focus {
+        border-color: var(--lp-amber);
+      }
+      #capture-text::placeholder {
+        color: var(--lp-muted);
+      }
 
-    .capture-tags {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
+      .capture-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
 
-    .tag-btn {
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      color: var(--lp-muted);
-      font-size: 0.78rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--lp-font);
-    }
-    .tag-btn.active {
-      background: rgba(245,158,11,0.12);
-      border-color: var(--lp-amber);
-      color: var(--lp-amber);
-    }
-    .tag-btn:hover:not(.active) {
-      border-color: rgba(245,158,11,0.3);
-    }
+      .tag-btn {
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        color: var(--lp-muted);
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: var(--lp-font);
+      }
+      .tag-btn.active {
+        background: rgba(245, 158, 11, 0.12);
+        border-color: var(--lp-amber);
+        color: var(--lp-amber);
+      }
+      .tag-btn:hover:not(.active) {
+        border-color: rgba(245, 158, 11, 0.3);
+      }
 
-    .btn-amber {
-      width: 100%;
-      padding: 0.9rem;
-      border-radius: var(--lp-radius-lg);
-      background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
-      border: none;
-      color: #0a0f1e;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      margin-bottom: 0.75rem;
-      font-family: var(--lp-font);
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 20px var(--lp-glow);
-    }
-    .btn-amber:active {
-      transform: scale(0.98);
-      box-shadow: 0 2px 10px var(--lp-glow);
-    }
+      .btn-amber {
+        width: 100%;
+        padding: 0.9rem;
+        border-radius: var(--lp-radius-lg);
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        border: none;
+        color: #0a0f1e;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin-bottom: 0.75rem;
+        font-family: var(--lp-font);
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        box-shadow: 0 4px 20px var(--lp-glow);
+      }
+      .btn-amber:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 10px var(--lp-glow);
+      }
 
-    .voice-btn {
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      background: rgba(245,158,11,0.1);
-      border: 2px solid rgba(245,158,11,0.3);
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.5rem;
-      transition: all 0.15s;
-    }
-    .voice-btn:active {
-      background: rgba(245,158,11,0.25);
-      border-color: var(--lp-amber);
-    }
-    .voice-btn.recording {
-      background: rgba(239,68,68,0.15);
-      border-color: #ef4444;
-      animation: glow-pulse-red 1s infinite;
-    }
-    @keyframes glow-pulse-red {
-      0%, 100% { box-shadow: 0 0 8px rgba(239,68,68,0.3); }
-      50% { box-shadow: 0 0 20px rgba(239,68,68,0.6); }
-    }
+      .voice-btn {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: rgba(245, 158, 11, 0.1);
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        transition: all 0.15s;
+      }
+      .voice-btn:active {
+        background: rgba(245, 158, 11, 0.25);
+        border-color: var(--lp-amber);
+      }
+      .voice-btn.recording {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: #ef4444;
+        animation: glow-pulse-red 1s infinite;
+      }
+      @keyframes glow-pulse-red {
+        0%,
+        100% {
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+        }
+      }
 
-    /* ===========================
+      /* ===========================
        Settings Page
     =========================== */
-    .settings-section {
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-    }
-    .settings-section .sh-label {
-      margin-bottom: 0.85rem;
-      display: block;
-    }
+      .settings-section {
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .settings-section .sh-label {
+        margin-bottom: 0.85rem;
+        display: block;
+      }
 
-    .connection-status {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
-    }
+      .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+      }
 
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #71717a;
-      transition: background 0.3s, box-shadow 0.3s;
-      flex-shrink: 0;
-    }
-    .status-dot.online {
-      background: var(--lp-teal);
-      box-shadow: 0 0 6px var(--lp-teal);
-    }
-    .status-dot.error {
-      background: #ef4444;
-      box-shadow: 0 0 6px #ef4444;
-    }
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #71717a;
+        transition:
+          background 0.3s,
+          box-shadow 0.3s;
+        flex-shrink: 0;
+      }
+      .status-dot.online {
+        background: var(--lp-teal);
+        box-shadow: 0 0 6px var(--lp-teal);
+      }
+      .status-dot.error {
+        background: #ef4444;
+        box-shadow: 0 0 6px #ef4444;
+      }
 
-    .form-field { margin-bottom: 0.85rem; }
-    .form-field label {
-      display: block;
-      font-size: 0.75rem;
-      color: var(--lp-muted);
-      margin-bottom: 0.3rem;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-    }
-    .form-field input {
-      width: 100%;
-      background: var(--lp-bg-surface);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius);
-      padding: 0.65rem 0.85rem;
-      color: var(--lp-text);
-      font-family: var(--lp-font);
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .form-field input:focus { border-color: var(--lp-amber); }
-    .form-field input::placeholder { color: var(--lp-muted); }
+      .form-field {
+        margin-bottom: 0.85rem;
+      }
+      .form-field label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--lp-muted);
+        margin-bottom: 0.3rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+      .form-field input {
+        width: 100%;
+        background: var(--lp-bg-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius);
+        padding: 0.65rem 0.85rem;
+        color: var(--lp-text);
+        font-family: var(--lp-font);
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .form-field input:focus {
+        border-color: var(--lp-amber);
+      }
+      .form-field input::placeholder {
+        color: var(--lp-muted);
+      }
 
-    .agent-card {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--lp-border);
-    }
-    .agent-card:last-child { border-bottom: none; }
-    .agent-name { font-size: 0.85rem; font-weight: 600; color: var(--lp-text-strong); }
-    .agent-role { font-size: 0.72rem; color: var(--lp-muted); }
+      .agent-card {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--lp-border);
+      }
+      .agent-card:last-child {
+        border-bottom: none;
+      }
+      .agent-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--lp-text-strong);
+      }
+      .agent-role {
+        font-size: 0.72rem;
+        color: var(--lp-muted);
+      }
 
-    .cron-overview-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-    }
-    .cron-stat { text-align: center; }
-    .cron-stat-val {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--lp-text-strong);
-      font-family: var(--lp-mono);
-    }
-    .cron-stat-label {
-      font-size: 0.7rem;
-      color: var(--lp-muted);
-    }
+      .cron-overview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+      }
+      .cron-stat {
+        text-align: center;
+      }
+      .cron-stat-val {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--lp-text-strong);
+        font-family: var(--lp-mono);
+      }
+      .cron-stat-label {
+        font-size: 0.7rem;
+        color: var(--lp-muted);
+      }
 
-    .about-card { display: flex; flex-direction: column; gap: 0.6rem; }
-    .about-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.83rem;
-    }
-    .about-val {
-      color: var(--lp-muted);
-      font-family: var(--lp-mono);
-      font-size: 0.78rem;
-    }
-    .about-link {
-      color: var(--lp-amber);
-      text-decoration: none;
-      font-size: 0.78rem;
-    }
-    .about-link:hover { text-decoration: underline; }
+      .about-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      .about-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.83rem;
+      }
+      .about-val {
+        color: var(--lp-muted);
+        font-family: var(--lp-mono);
+        font-size: 0.78rem;
+      }
+      .about-link {
+        color: var(--lp-amber);
+        text-decoration: none;
+        font-size: 0.78rem;
+      }
+      .about-link:hover {
+        text-decoration: underline;
+      }
 
-    /* ===========================
+      /* ===========================
        Bottom Nav
     =========================== */
-    #bottom-nav {
-      display: flex;
-      height: calc(56px + env(safe-area-inset-bottom));
-      padding-bottom: env(safe-area-inset-bottom);
-      background: var(--lp-bg-surface);
-      border-top: 1px solid var(--lp-border);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      flex-shrink: 0;
-      position: relative;
-      z-index: 10;
-    }
+      #bottom-nav {
+        display: flex;
+        height: calc(56px + env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
+        background: var(--lp-bg-surface);
+        border-top: 1px solid var(--lp-border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 10;
+      }
 
-    .nav-tab {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.2rem;
-      text-decoration: none;
-      color: var(--lp-muted);
-      transition: color 0.2s;
-      padding: 0.5rem 0;
-      position: relative;
-    }
-    .nav-tab.active { color: var(--lp-amber); }
-    .nav-tab.active .nav-icon {
-      filter: drop-shadow(0 0 4px rgba(245,158,11,0.6));
-    }
-    .nav-tab.active::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 32px;
-      height: 2px;
-      background: var(--lp-amber);
-      border-radius: 0 0 2px 2px;
-    }
-    .nav-icon { font-size: 1.3rem; line-height: 1; }
-    .nav-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.04em; }
+      .nav-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        text-decoration: none;
+        color: var(--lp-muted);
+        transition: color 0.2s;
+        padding: 0.5rem 0;
+        position: relative;
+      }
+      .nav-tab.active {
+        color: var(--lp-amber);
+      }
+      .nav-tab.active .nav-icon {
+        filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
+      }
+      .nav-tab.active::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 32px;
+        height: 2px;
+        background: var(--lp-amber);
+        border-radius: 0 0 2px 2px;
+      }
+      .nav-icon {
+        font-size: 1.3rem;
+        line-height: 1;
+      }
+      .nav-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
 
-    /* ===========================
+      /* ===========================
        Utility / Animations
     =========================== */
-    @keyframes glow-pulse {
-      0%, 100% { box-shadow: 0 0 8px var(--lp-glow); }
-      50% { box-shadow: 0 0 20px rgba(245,158,11,0.4); }
-    }
-
-    @keyframes fade-in {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .fade-in {
-      animation: fade-in 0.3s ease forwards;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 2.5rem 1rem;
-      color: var(--lp-muted);
-      font-size: 0.85rem;
-    }
-    .empty-state-icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      opacity: 0.5;
-    }
-
-    /* Scrollbar styling */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--lp-border); border-radius: 2px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.3); }
-
-    /* Toast notification */
-    #toast-container {
-      position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 1rem);
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2000;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      pointer-events: none;
-    }
-    .toast {
-      background: var(--lp-bg-card);
-      border: 1px solid var(--lp-border);
-      border-radius: var(--lp-radius-lg);
-      padding: 0.65rem 1.1rem;
-      font-size: 0.82rem;
-      color: var(--lp-text-strong);
-      white-space: nowrap;
-      animation: toast-in 0.3s ease forwards;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    .toast.success { border-color: rgba(20,184,166,0.4); }
-    .toast.error { border-color: rgba(239,68,68,0.4); }
-    @keyframes toast-in {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Capture success shimmer */
-    .capture-success {
-      border-color: rgba(20,184,166,0.5) !important;
-      box-shadow: 0 0 12px rgba(20,184,166,0.2);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
+      @keyframes glow-pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 8px var(--lp-glow);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
       }
-    }
 
-    /* ===========================
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fade-in 0.3s ease forwards;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--lp-muted);
+        font-size: 0.85rem;
+      }
+      .empty-state-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--lp-border);
+        border-radius: 2px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(245, 158, 11, 0.3);
+      }
+
+      /* Toast notification */
+      #toast-container {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 1rem);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        pointer-events: none;
+      }
+      .toast {
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        padding: 0.65rem 1.1rem;
+        font-size: 0.82rem;
+        color: var(--lp-text-strong);
+        white-space: nowrap;
+        animation: toast-in 0.3s ease forwards;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .toast.success {
+        border-color: rgba(20, 184, 166, 0.4);
+      }
+      .toast.error {
+        border-color: rgba(239, 68, 68, 0.4);
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Capture success shimmer */
+      .capture-success {
+        border-color: rgba(20, 184, 166, 0.5) !important;
+        box-shadow: 0 0 12px rgba(20, 184, 166, 0.2);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* ===========================
        Responsive tweaks
     =========================== */
-    @media (min-width: 480px) {
-      .metrics-grid { gap: 1rem; }
-      .mc-value { font-size: 1.8rem; }
-    }
-    @media (min-width: 768px) {
-      .page { padding-left: 1.5rem; padding-right: 1.5rem; }
-      .metrics-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-  </style>
-</head>
-<body>
+      @media (min-width: 480px) {
+        .metrics-grid {
+          gap: 1rem;
+        }
+        .mc-value {
+          font-size: 1.8rem;
+        }
+      }
+      @media (min-width: 768px) {
+        .page {
+          padding-left: 1.5rem;
+          padding-right: 1.5rem;
+        }
+        .metrics-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
 
-  <!-- Toast notifications -->
-  <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+      /* ===========================
+       Calendar Page
+    =========================== */
+      .cal-hero-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(249, 115, 22, 0.04));
+        border: 1px solid rgba(245, 158, 11, 0.22);
+        border-left: 4px solid var(--lp-amber);
+        border-radius: var(--lp-radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .cal-hero-label {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: var(--lp-amber);
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+      }
+      .cal-hero-time {
+        font-family: var(--lp-mono);
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--lp-text-strong);
+        line-height: 1;
+        margin-bottom: 0.35rem;
+      }
+      .cal-hero-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--lp-text-strong);
+        margin-bottom: 0.3rem;
+      }
+      .cal-hero-meta {
+        font-size: 0.75rem;
+        color: var(--lp-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .cal-countdown {
+        font-family: var(--lp-mono);
+        font-size: 0.75rem;
+        color: var(--lp-amber);
+        background: rgba(245, 158, 11, 0.1);
+        border-radius: 999px;
+        padding: 0.12rem 0.5rem;
+      }
 
-  <!-- ===========================
-       Welcome Screen
-  =========================== -->
-  <div id="welcome-screen">
-    <canvas id="welcome-particles" width="80" height="80" aria-hidden="true"></canvas>
+      /* Quick add strip */
+      #cal-add-strip {
+        display: flex;
+        gap: 0.35rem;
+        align-items: center;
+        padding: 0.45rem 0.7rem;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius-lg);
+        margin-bottom: 1rem;
+      }
+      #cal-add-strip input[type="date"],
+      #cal-add-strip input[type="time"] {
+        background: transparent;
+        border: none;
+        color: var(--lp-text);
+        font-family: var(--lp-mono);
+        font-size: 0.78rem;
+        outline: none;
+        flex-shrink: 0;
+        padding: 0;
+        min-width: 0;
+        color-scheme: dark;
+      }
+      #cal-add-strip input[type="date"] {
+        width: 100px;
+      }
+      #cal-add-strip input[type="time"] {
+        width: 58px;
+      }
+      #cal-add-strip input[type="text"] {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--lp-text);
+        font-family: var(--lp-font);
+        font-size: 0.85rem;
+        outline: none;
+        min-width: 0;
+      }
+      #cal-add-strip input::placeholder {
+        color: var(--lp-muted);
+      }
+      #cal-add-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        border: none;
+        color: #0a0f1e;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        box-shadow: 0 2px 8px var(--lp-glow);
+        line-height: 1;
+      }
+      #cal-add-btn:active {
+        transform: scale(0.88);
+      }
 
-    <div class="welcome-logo">
-      <div class="welcome-wordmark">Kairo</div>
-      <div class="welcome-subtitle">個人全能 AI 指揮中心</div>
-    </div>
+      /* Calendar timeline */
+      .cal-day-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1rem 0 0.45rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--lp-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+      .cal-day-today-pill {
+        font-size: 0.6rem;
+        font-weight: 700;
+        background: rgba(245, 158, 11, 0.12);
+        color: var(--lp-amber);
+        border: 1px solid rgba(245, 158, 11, 0.28);
+        border-radius: 999px;
+        padding: 0.05rem 0.4rem;
+        letter-spacing: 0.05em;
+      }
+      .cal-event {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        padding: 0.6rem 0.75rem;
+        background: var(--lp-bg-card);
+        border-radius: var(--lp-radius);
+        margin-bottom: 0.35rem;
+        border-left: 3px solid transparent;
+        transition: opacity 0.2s;
+      }
+      .cal-event.cal-event-past {
+        opacity: 0.42;
+      }
+      .cal-event[data-type="meeting"] {
+        border-left-color: #3b82f6;
+      }
+      .cal-event[data-type="important"] {
+        border-left-color: var(--lp-amber);
+      }
+      .cal-event[data-type="study"] {
+        border-left-color: #a78bfa;
+      }
+      .cal-event[data-type="health"] {
+        border-left-color: var(--lp-teal);
+      }
+      .cal-event[data-type="personal"] {
+        border-left-color: #f472b6;
+      }
+      .cal-event[data-type="work"] {
+        border-left-color: #3b82f6;
+      }
+      .cal-event-time {
+        font-family: var(--lp-mono);
+        font-size: 0.75rem;
+        color: var(--lp-muted);
+        flex-shrink: 0;
+        width: 44px;
+        padding-top: 0.1rem;
+      }
+      .cal-event-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .cal-event-title {
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: var(--lp-text-strong);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .cal-event-sub {
+        font-size: 0.72rem;
+        color: var(--lp-muted);
+        margin-top: 0.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .cal-event-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
+      }
+      .cal-badge {
+        font-size: 0.58rem;
+        font-weight: 700;
+        padding: 0.08rem 0.38rem;
+        border-radius: 999px;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+      }
+      .cal-badge-feishu {
+        background: rgba(59, 130, 246, 0.12);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.22);
+      }
+      .cal-badge-local {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--lp-amber);
+        border: 1px solid rgba(245, 158, 11, 0.22);
+      }
+      .cal-badge-mock {
+        background: rgba(113, 113, 122, 0.12);
+        color: var(--lp-muted);
+        border: 1px solid rgba(113, 113, 122, 0.2);
+      }
+      .cal-badge-queue {
+        background: rgba(167, 139, 250, 0.12);
+        color: #a78bfa;
+        border: 1px solid rgba(167, 139, 250, 0.22);
+      }
+      .cal-now-line {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+      }
+      .cal-now-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--lp-amber);
+        animation: glow-pulse 1.5s infinite;
+        flex-shrink: 0;
+      }
+      .cal-now-bar {
+        flex: 1;
+        height: 1px;
+        background: rgba(245, 158, 11, 0.28);
+      }
+      .cal-now-label {
+        font-family: var(--lp-mono);
+        font-size: 0.65rem;
+        color: var(--lp-amber);
+        flex-shrink: 0;
+      }
+      .cal-delete-btn {
+        background: none;
+        border: none;
+        color: var(--lp-muted);
+        font-size: 0.78rem;
+        cursor: pointer;
+        padding: 0.1rem 0.2rem;
+        border-radius: 4px;
+        line-height: 1;
+        opacity: 0.55;
+        transition:
+          opacity 0.15s,
+          color 0.15s;
+      }
+      .cal-delete-btn:hover {
+        opacity: 1;
+        color: #ef4444;
+      }
 
-    <div class="welcome-actions">
-      <button id="btn-connect">🔗 連接我的 Kairo</button>
-      <button id="btn-demo">🎯 Demo 模式</button>
-    </div>
-  </div>
-
-  <!-- ===========================
-       App Root
-  =========================== -->
-  <div id="app-root" class="hidden">
-
-    <!-- Pages -->
-    <div id="pages">
-
-      <!-- ===========================
-           Page 1: Dashboard
-      =========================== -->
-      <section class="page active" id="page-dashboard" data-page="dashboard">
-        <div class="page-header">
-          <div class="page-title">
-            <span class="page-title-amber">Kairo</span> 指揮中心
-          </div>
-          <div id="live-clock" style="font-size:0.75rem;color:var(--lp-muted);font-family:var(--lp-mono);"></div>
-        </div>
-
-        <!-- 2×2 Metrics Grid -->
-        <div class="metrics-grid">
-          <div class="metric-card" id="mc-tokens">
-            <div class="mc-icon">📊</div>
-            <div class="mc-value" id="mv-tokens">--</div>
-            <div class="mc-label">今日 Tokens</div>
-            <div class="mc-sub" id="ms-tokens">--</div>
-          </div>
-          <div class="metric-card" id="mc-agents">
-            <div class="mc-icon">🤖</div>
-            <div class="mc-value" id="mv-agents">--</div>
-            <div class="mc-label">Agents 在線</div>
-            <div class="mc-dots" id="ms-agents"><!-- dots injected by app.js --></div>
-          </div>
-          <div class="metric-card" id="mc-tasks">
-            <div class="mc-icon">✅</div>
-            <div class="mc-value" id="mv-tasks">--</div>
-            <div class="mc-label">高優先任務</div>
-            <div class="mc-sub" id="ms-tasks">--</div>
-          </div>
-          <div class="metric-card" id="mc-cron">
-            <div class="mc-icon">⏰</div>
-            <div class="mc-value" id="mv-cron">--</div>
-            <div class="mc-label">Cron 活躍</div>
-            <div class="mc-sub" id="ms-cron">--</div>
-          </div>
-        </div>
-
-        <!-- 7-day Usage Chart -->
-        <div class="section-header">
-          <span class="sh-label">7 天用量</span>
-          <span class="sh-action" id="chart-legend" style="font-family:var(--lp-mono);font-size:0.68rem;">Tokens / 天</span>
-        </div>
-        <div class="chart-wrap">
-          <canvas id="usage-chart" height="80"></canvas>
-        </div>
-
-        <!-- Today's Calendar -->
-        <div class="section-header">
-          <span class="sh-label">今日日曆</span>
-          <span class="sh-action">查看全部</span>
-        </div>
-        <div id="calendar-list" class="card-list"></div>
-
-        <!-- High Priority Tasks -->
-        <div class="section-header">
-          <span class="sh-label">⚡ 待辦跟進</span>
-          <span class="sh-action">全部任務</span>
-        </div>
-        <div id="task-highlights" class="card-list"></div>
-
-        <!-- Kairo Latest Message -->
-        <div class="section-header">
-          <span class="sh-label">💬 Kairo 動態</span>
-        </div>
-        <div id="kairo-news" class="kairo-news-card">
-          <div class="kn-header">
-            <div class="kn-avatar">K</div>
-            <span class="kn-name">Kairo</span>
-            <span class="kn-time" id="kn-time">--</span>
-          </div>
-          <div id="kn-content">正在載入...</div>
-        </div>
-
-      </section>
-
-      <!-- ===========================
-           Page 2: Chat
-      =========================== -->
-      <section class="page" id="page-chat" data-page="chat">
-        <div class="page-header">
-          <div class="page-title">對話 Kairo</div>
-          <div style="font-size:0.72rem;color:var(--lp-teal);display:flex;align-items:center;gap:0.35rem;">
-            <div class="status-dot-sm" id="chat-status-dot"></div>
-            <span id="chat-status-text">線上</span>
-          </div>
-        </div>
-
-        <div class="chat-container">
-          <div id="chat-messages" class="chat-messages">
-            <!-- Messages injected by app.js -->
-          </div>
-
-          <div id="typing-indicator" class="typing-indicator hidden" aria-live="polite" aria-label="Kairo 正在輸入">
-            <span></span><span></span><span></span>
-          </div>
-
-          <form id="chat-form" class="chat-input-area" autocomplete="off">
-            <textarea
-              id="chat-input"
-              placeholder="消息 Kairo…"
-              rows="1"
-              aria-label="輸入消息"
-              maxlength="4000"
-            ></textarea>
-            <button type="submit" class="send-btn" aria-label="發送">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-              </svg>
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <!-- ===========================
-           Page 3: Tasks
-      =========================== -->
-      <section class="page" id="page-tasks" data-page="tasks">
-        <div class="page-header">
-          <div class="page-title">任務管理</div>
-          <button style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:999px;padding:0.3rem 0.75rem;font-size:0.72rem;color:var(--lp-amber);cursor:pointer;" id="add-task-btn">
-            + 新增
-          </button>
-        </div>
-
-        <div class="filter-tabs" role="tablist" aria-label="任務篩選">
-          <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">全部</button>
-          <button class="filter-tab" data-filter="high" role="tab" aria-selected="false">HIGH</button>
-          <button class="filter-tab" data-filter="active" role="tab" aria-selected="false">進行中</button>
-          <button class="filter-tab" data-filter="done" role="tab" aria-selected="false">完成</button>
-        </div>
-
-        <div id="tasks-list" class="card-list" role="list"></div>
-      </section>
-
-      <!-- ===========================
-           Page 4: Capture
-      =========================== -->
-      <section class="page" id="page-capture" data-page="capture">
-        <div class="page-header">
-          <div class="page-title">快速捕捉</div>
-          <div style="font-size:0.72rem;color:var(--lp-muted);">零摩擦記錄</div>
-        </div>
-
-        <div class="capture-form">
-          <textarea
-            id="capture-text"
-            placeholder="捕捉想法、任務、人名…&#10;（隨時記，Kairo 幫你整理）"
-            rows="5"
-            aria-label="捕捉內容"
-            maxlength="2000"
-          ></textarea>
-
-          <div class="capture-tags" role="group" aria-label="標籤">
-            <button class="tag-btn" data-tag="work" aria-pressed="false">💼 工作</button>
-            <button class="tag-btn" data-tag="people" aria-pressed="false">👤 人脈</button>
-            <button class="tag-btn" data-tag="learn" aria-pressed="false">📚 學習</button>
-            <button class="tag-btn" data-tag="health" aria-pressed="false">🏃 健康</button>
-          </div>
-
-          <button id="capture-submit" class="btn-amber">發送給 Kairo</button>
-
-          <button id="voice-btn" class="voice-btn" aria-label="語音輸入" title="語音輸入">
-            🎤
-          </button>
-        </div>
-
-        <div class="section-header">
-          <span class="sh-label">最近捕捉</span>
-          <span class="sh-action" id="clear-history-btn">清除歷史</span>
-        </div>
-        <div id="capture-history" class="card-list" role="list"></div>
-      </section>
-
-      <!-- ===========================
-           Page 5: Settings
-      =========================== -->
-      <section class="page" id="page-settings" data-page="settings">
-        <div class="page-header">
-          <div class="page-title">系統設定</div>
-        </div>
-
-        <!-- Connection Settings -->
-        <div class="settings-section">
-          <span class="sh-label">連線設定</span>
-
-          <div class="connection-status" id="conn-status" aria-live="polite">
-            <span class="status-dot" id="status-dot"></span>
-            <span id="status-text">未連線 (Demo 模式)</span>
-          </div>
-
-          <div class="form-field">
-            <label for="server-url">Server URL</label>
-            <input
-              type="url"
-              id="server-url"
-              placeholder="http://your-server:18789"
-              autocomplete="url"
-              spellcheck="false"
-            >
-          </div>
-
-          <div class="form-field">
-            <label for="auth-token">Auth Token</label>
-            <input
-              type="password"
-              id="auth-token"
-              placeholder="••••••••"
-              autocomplete="current-password"
-            >
-          </div>
-
-          <button id="test-connection" class="btn-amber">測試連線</button>
-        </div>
-
-        <!-- Agent Status -->
-        <div class="settings-section">
-          <span class="sh-label">Agent 狀態</span>
-          <div id="agent-status-list" class="card-list"></div>
-        </div>
-
-        <!-- Cron Overview -->
-        <div class="settings-section">
-          <span class="sh-label">Cron 概覽</span>
-          <div id="cron-overview" class="cron-overview-grid">
-            <div class="cron-stat">
-              <div class="cron-stat-val" id="cron-total">--</div>
-              <div class="cron-stat-label">總 Jobs</div>
-            </div>
-            <div class="cron-stat">
-              <div class="cron-stat-val" id="cron-active">--</div>
-              <div class="cron-stat-label">活躍</div>
-            </div>
-            <div class="cron-stat">
-              <div class="cron-stat-val" id="cron-next">--</div>
-              <div class="cron-stat-label">下次執行</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- About -->
-        <div class="settings-section">
-          <span class="sh-label">關於 Kairo</span>
-          <div class="about-card">
-            <div class="about-row">
-              <span>版本</span>
-              <span class="about-val">v1.0.0</span>
-            </div>
-            <div class="about-row">
-              <span>模式</span>
-              <span class="about-val" id="about-mode">Demo</span>
-            </div>
-            <div class="about-row">
-              <span>Landing Page</span>
-              <a href="https://sou350121.github.io/kairo-landing/" target="_blank" rel="noopener noreferrer" class="about-link">kairo-landing ↗</a>
-            </div>
-            <div class="about-row">
-              <span>GitHub</span>
-              <a href="https://github.com/lachlanchen/LazyingArtBot" target="_blank" rel="noopener noreferrer" class="about-link">LazyingArtBot ↗</a>
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-    </div><!-- /#pages -->
+      @media (max-width: 374px) {
+        .nav-label {
+          font-size: 0.5rem;
+        }
+        .nav-icon {
+          font-size: 1.1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Toast notifications -->
+    <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
     <!-- ===========================
+       Welcome Screen
+  =========================== -->
+    <div id="welcome-screen">
+      <canvas id="welcome-particles" width="80" height="80" aria-hidden="true"></canvas>
+
+      <div class="welcome-logo">
+        <div class="welcome-wordmark">Kairo</div>
+        <div class="welcome-subtitle">個人全能 AI 指揮中心</div>
+      </div>
+
+      <div class="welcome-actions">
+        <button id="btn-connect">🔗 連接我的 Kairo</button>
+        <button id="btn-demo">🎯 Demo 模式</button>
+      </div>
+    </div>
+
+    <!-- ===========================
+       App Root
+  =========================== -->
+    <div id="app-root" class="hidden">
+      <!-- Pages -->
+      <div id="pages">
+        <!-- ===========================
+           Page 1: Dashboard
+      =========================== -->
+        <section class="page active" id="page-dashboard" data-page="dashboard">
+          <div class="page-header">
+            <div class="page-title"><span class="page-title-amber">Kairo</span> 指揮中心</div>
+            <div
+              id="live-clock"
+              style="font-size: 0.75rem; color: var(--lp-muted); font-family: var(--lp-mono)"
+            ></div>
+          </div>
+
+          <!-- 2×2 Metrics Grid -->
+          <div class="metrics-grid">
+            <div class="metric-card" id="mc-tokens">
+              <div class="mc-icon">📊</div>
+              <div class="mc-value" id="mv-tokens">--</div>
+              <div class="mc-label">今日 Tokens</div>
+              <div class="mc-sub" id="ms-tokens">--</div>
+            </div>
+            <div class="metric-card" id="mc-agents">
+              <div class="mc-icon">🤖</div>
+              <div class="mc-value" id="mv-agents">--</div>
+              <div class="mc-label">Agents 在線</div>
+              <div class="mc-dots" id="ms-agents"><!-- dots injected by app.js --></div>
+            </div>
+            <div class="metric-card" id="mc-tasks">
+              <div class="mc-icon">✅</div>
+              <div class="mc-value" id="mv-tasks">--</div>
+              <div class="mc-label">高優先任務</div>
+              <div class="mc-sub" id="ms-tasks">--</div>
+            </div>
+            <div class="metric-card" id="mc-cron">
+              <div class="mc-icon">⏰</div>
+              <div class="mc-value" id="mv-cron">--</div>
+              <div class="mc-label">Cron 活躍</div>
+              <div class="mc-sub" id="ms-cron">--</div>
+            </div>
+          </div>
+
+          <!-- 7-day Usage Chart -->
+          <div class="section-header">
+            <span class="sh-label">7 天用量</span>
+            <span
+              class="sh-action"
+              id="chart-legend"
+              style="font-family: var(--lp-mono); font-size: 0.68rem"
+              >Tokens / 天</span
+            >
+          </div>
+          <div class="chart-wrap">
+            <canvas id="usage-chart" height="80"></canvas>
+          </div>
+
+          <!-- Today's Calendar -->
+          <div class="section-header">
+            <span class="sh-label">今日日曆</span>
+            <span class="sh-action" id="cal-view-all">查看全部</span>
+          </div>
+          <div id="calendar-list" class="card-list"></div>
+
+          <!-- High Priority Tasks -->
+          <div class="section-header">
+            <span class="sh-label">⚡ 待辦跟進</span>
+            <span class="sh-action">全部任務</span>
+          </div>
+          <div id="task-highlights" class="card-list"></div>
+
+          <!-- Kairo Latest Message -->
+          <div class="section-header">
+            <span class="sh-label">💬 Kairo 動態</span>
+          </div>
+          <div id="kairo-news" class="kairo-news-card">
+            <div class="kn-header">
+              <div class="kn-avatar">K</div>
+              <span class="kn-name">Kairo</span>
+              <span class="kn-time" id="kn-time">--</span>
+            </div>
+            <div id="kn-content">正在載入...</div>
+          </div>
+        </section>
+
+        <!-- ===========================
+           Page 2: Chat
+      =========================== -->
+        <section class="page" id="page-chat" data-page="chat">
+          <div class="page-header">
+            <div class="page-title">對話 Kairo</div>
+            <div
+              style="
+                font-size: 0.72rem;
+                color: var(--lp-teal);
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+              "
+            >
+              <div class="status-dot-sm" id="chat-status-dot"></div>
+              <span id="chat-status-text">線上</span>
+            </div>
+          </div>
+
+          <div class="chat-container">
+            <div id="chat-messages" class="chat-messages">
+              <!-- Messages injected by app.js -->
+            </div>
+
+            <div
+              id="typing-indicator"
+              class="typing-indicator hidden"
+              aria-live="polite"
+              aria-label="Kairo 正在輸入"
+            >
+              <span></span><span></span><span></span>
+            </div>
+
+            <form id="chat-form" class="chat-input-area" autocomplete="off">
+              <textarea
+                id="chat-input"
+                placeholder="消息 Kairo…"
+                rows="1"
+                aria-label="輸入消息"
+                maxlength="4000"
+              ></textarea>
+              <button type="submit" class="send-btn" aria-label="發送">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ===========================
+           Page 3: Tasks
+      =========================== -->
+        <section class="page" id="page-tasks" data-page="tasks">
+          <div class="page-header">
+            <div class="page-title">任務管理</div>
+            <button
+              style="
+                background: rgba(245, 158, 11, 0.1);
+                border: 1px solid rgba(245, 158, 11, 0.3);
+                border-radius: 999px;
+                padding: 0.3rem 0.75rem;
+                font-size: 0.72rem;
+                color: var(--lp-amber);
+                cursor: pointer;
+              "
+              id="add-task-btn"
+            >
+              + 新增
+            </button>
+          </div>
+
+          <div class="filter-tabs" role="tablist" aria-label="任務篩選">
+            <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">
+              全部
+            </button>
+            <button class="filter-tab" data-filter="high" role="tab" aria-selected="false">
+              HIGH
+            </button>
+            <button class="filter-tab" data-filter="active" role="tab" aria-selected="false">
+              進行中
+            </button>
+            <button class="filter-tab" data-filter="done" role="tab" aria-selected="false">
+              完成
+            </button>
+          </div>
+
+          <div id="tasks-list" class="card-list" role="list"></div>
+        </section>
+
+        <!-- ===========================
+           Page 4: Calendar
+      =========================== -->
+        <section class="page" id="page-calendar" data-page="calendar">
+          <div class="page-header">
+            <div class="page-title">行程表</div>
+            <div
+              id="cal-today-date"
+              style="font-size: 0.72rem; color: var(--lp-muted); font-family: var(--lp-mono)"
+            ></div>
+          </div>
+
+          <!-- NEXT UP Hero -->
+          <div id="cal-hero"></div>
+
+          <!-- Quick Add Strip -->
+          <div id="cal-add-strip" role="form" aria-label="快速新增事件">
+            <input type="date" id="cal-add-date" aria-label="日期" />
+            <input type="time" id="cal-add-time" aria-label="時間" />
+            <input
+              type="text"
+              id="cal-add-title"
+              placeholder="新增事件…"
+              maxlength="100"
+              aria-label="事件名稱"
+            />
+            <button id="cal-add-btn" aria-label="新增事件">＋</button>
+          </div>
+
+          <!-- View Filter Tabs -->
+          <div class="filter-tabs" role="tablist" aria-label="日曆檢視">
+            <button
+              class="filter-tab active"
+              data-cal-view="today"
+              role="tab"
+              aria-selected="true"
+            >
+              今天
+            </button>
+            <button class="filter-tab" data-cal-view="week" role="tab" aria-selected="false">
+              本週
+            </button>
+            <button class="filter-tab" data-cal-view="all" role="tab" aria-selected="false">
+              全部
+            </button>
+          </div>
+
+          <!-- Timeline -->
+          <div id="cal-timeline" class="card-list" role="list" aria-label="事件列表"></div>
+        </section>
+
+        <!-- ===========================
+           Page 5: Capture
+      =========================== -->
+        <section class="page" id="page-capture" data-page="capture">
+          <div class="page-header">
+            <div class="page-title">快速捕捉</div>
+            <div style="font-size: 0.72rem; color: var(--lp-muted)">零摩擦記錄</div>
+          </div>
+
+          <div class="capture-form">
+            <textarea
+              id="capture-text"
+              placeholder="捕捉想法、任務、人名…&#10;（隨時記，Kairo 幫你整理）"
+              rows="5"
+              aria-label="捕捉內容"
+              maxlength="2000"
+            ></textarea>
+
+            <div class="capture-tags" role="group" aria-label="標籤">
+              <button class="tag-btn" data-tag="work" aria-pressed="false">💼 工作</button>
+              <button class="tag-btn" data-tag="people" aria-pressed="false">👤 人脈</button>
+              <button class="tag-btn" data-tag="learn" aria-pressed="false">📚 學習</button>
+              <button class="tag-btn" data-tag="health" aria-pressed="false">🏃 健康</button>
+            </div>
+
+            <button id="capture-submit" class="btn-amber">發送給 Kairo</button>
+
+            <button id="voice-btn" class="voice-btn" aria-label="語音輸入" title="語音輸入">
+              🎤
+            </button>
+          </div>
+
+          <div class="section-header">
+            <span class="sh-label">最近捕捉</span>
+            <span class="sh-action" id="clear-history-btn">清除歷史</span>
+          </div>
+          <div id="capture-history" class="card-list" role="list"></div>
+        </section>
+
+        <!-- ===========================
+           Page 5: Settings
+      =========================== -->
+        <section class="page" id="page-settings" data-page="settings">
+          <div class="page-header">
+            <div class="page-title">系統設定</div>
+          </div>
+
+          <!-- Connection Settings -->
+          <div class="settings-section">
+            <span class="sh-label">連線設定</span>
+
+            <div class="connection-status" id="conn-status" aria-live="polite">
+              <span class="status-dot" id="status-dot"></span>
+              <span id="status-text">未連線 (Demo 模式)</span>
+            </div>
+
+            <div class="form-field">
+              <label for="server-url">Server URL</label>
+              <input
+                type="url"
+                id="server-url"
+                placeholder="http://your-server:18789"
+                autocomplete="url"
+                spellcheck="false"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="auth-token">Auth Token</label>
+              <input
+                type="password"
+                id="auth-token"
+                placeholder="••••••••"
+                autocomplete="current-password"
+              />
+            </div>
+
+            <button id="test-connection" class="btn-amber">測試連線</button>
+          </div>
+
+          <!-- Agent Status -->
+          <div class="settings-section">
+            <span class="sh-label">Agent 狀態</span>
+            <div id="agent-status-list" class="card-list"></div>
+          </div>
+
+          <!-- Cron Overview -->
+          <div class="settings-section">
+            <span class="sh-label">Cron 概覽</span>
+            <div id="cron-overview" class="cron-overview-grid">
+              <div class="cron-stat">
+                <div class="cron-stat-val" id="cron-total">--</div>
+                <div class="cron-stat-label">總 Jobs</div>
+              </div>
+              <div class="cron-stat">
+                <div class="cron-stat-val" id="cron-active">--</div>
+                <div class="cron-stat-label">活躍</div>
+              </div>
+              <div class="cron-stat">
+                <div class="cron-stat-val" id="cron-next">--</div>
+                <div class="cron-stat-label">下次執行</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- About -->
+          <div class="settings-section">
+            <span class="sh-label">關於 Kairo</span>
+            <div class="about-card">
+              <div class="about-row">
+                <span>版本</span>
+                <span class="about-val">v1.0.0</span>
+              </div>
+              <div class="about-row">
+                <span>模式</span>
+                <span class="about-val" id="about-mode">Demo</span>
+              </div>
+              <div class="about-row">
+                <span>Landing Page</span>
+                <a
+                  href="https://sou350121.github.io/kairo-landing/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="about-link"
+                  >kairo-landing ↗</a
+                >
+              </div>
+              <div class="about-row">
+                <span>GitHub</span>
+                <a
+                  href="https://github.com/lachlanchen/LazyingArtBot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="about-link"
+                  >LazyingArtBot ↗</a
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <!-- /#pages -->
+
+      <!-- ===========================
          Bottom Navigation
     =========================== -->
-    <nav id="bottom-nav" role="navigation" aria-label="主導航">
-      <a class="nav-tab active" href="#dashboard" data-page="dashboard" aria-label="儀表板" role="tab" aria-selected="true">
-        <span class="nav-icon" aria-hidden="true">📊</span>
-        <span class="nav-label">儀表板</span>
-      </a>
-      <a class="nav-tab" href="#chat" data-page="chat" aria-label="對話" role="tab" aria-selected="false">
-        <span class="nav-icon" aria-hidden="true">💬</span>
-        <span class="nav-label">對話</span>
-      </a>
-      <a class="nav-tab" href="#tasks" data-page="tasks" aria-label="任務" role="tab" aria-selected="false">
-        <span class="nav-icon" aria-hidden="true">✅</span>
-        <span class="nav-label">任務</span>
-      </a>
-      <a class="nav-tab" href="#capture" data-page="capture" aria-label="捕捉" role="tab" aria-selected="false">
-        <span class="nav-icon" aria-hidden="true">📥</span>
-        <span class="nav-label">捕捉</span>
-      </a>
-      <a class="nav-tab" href="#settings" data-page="settings" aria-label="設定" role="tab" aria-selected="false">
-        <span class="nav-icon" aria-hidden="true">⚙️</span>
-        <span class="nav-label">設定</span>
-      </a>
-    </nav>
+      <nav id="bottom-nav" role="navigation" aria-label="主導航">
+        <a
+          class="nav-tab active"
+          href="#dashboard"
+          data-page="dashboard"
+          aria-label="儀表板"
+          role="tab"
+          aria-selected="true"
+        >
+          <span class="nav-icon" aria-hidden="true">📊</span>
+          <span class="nav-label">儀表板</span>
+        </a>
+        <a
+          class="nav-tab"
+          href="#chat"
+          data-page="chat"
+          aria-label="對話"
+          role="tab"
+          aria-selected="false"
+        >
+          <span class="nav-icon" aria-hidden="true">💬</span>
+          <span class="nav-label">對話</span>
+        </a>
+        <a
+          class="nav-tab"
+          href="#tasks"
+          data-page="tasks"
+          aria-label="任務"
+          role="tab"
+          aria-selected="false"
+        >
+          <span class="nav-icon" aria-hidden="true">✅</span>
+          <span class="nav-label">任務</span>
+        </a>
+        <a
+          class="nav-tab"
+          href="#calendar"
+          data-page="calendar"
+          aria-label="行程"
+          role="tab"
+          aria-selected="false"
+        >
+          <span class="nav-icon" aria-hidden="true">📅</span>
+          <span class="nav-label">行程</span>
+        </a>
+        <a
+          class="nav-tab"
+          href="#capture"
+          data-page="capture"
+          aria-label="捕捉"
+          role="tab"
+          aria-selected="false"
+        >
+          <span class="nav-icon" aria-hidden="true">📥</span>
+          <span class="nav-label">捕捉</span>
+        </a>
+        <a
+          class="nav-tab"
+          href="#settings"
+          data-page="settings"
+          aria-label="設定"
+          role="tab"
+          aria-selected="false"
+        >
+          <span class="nav-icon" aria-hidden="true">⚙️</span>
+          <span class="nav-label">設定</span>
+        </a>
+      </nav>
+    </div>
+    <!-- /#app-root -->
 
-  </div><!-- /#app-root -->
-
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>
