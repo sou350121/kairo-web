@@ -1841,6 +1841,383 @@
       .status-pending {
         background: #71717a;
       }
+
+      /* ===========================
+       Project Mission Board
+    =========================== */
+      .project-stats-bar {
+        display: flex;
+        gap: 0.45rem;
+        margin-bottom: 0.85rem;
+        flex-wrap: wrap;
+      }
+      .proj-stat-chip {
+        font-family: var(--lp-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.18rem 0.5rem;
+        border-radius: 999px;
+        background: var(--lp-bg-card);
+        border: 1px solid var(--lp-border);
+        color: var(--lp-muted);
+        letter-spacing: 0.04em;
+      }
+      .proj-stat-chip.urgent {
+        background: rgba(239, 68, 68, 0.12);
+        color: #f87171;
+        border-color: rgba(239, 68, 68, 0.22);
+      }
+      .proj-stat-chip.on-track {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--lp-amber);
+        border-color: rgba(245, 158, 11, 0.2);
+      }
+
+      .project-mission-card {
+        background: var(--lp-bg-card);
+        border-radius: var(--lp-radius-lg);
+        border: 1px solid var(--lp-border);
+        margin-bottom: 0.85rem;
+        overflow: hidden;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .project-mission-card:hover {
+        border-color: rgba(245, 158, 11, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+      }
+      .proj-urgency-strip {
+        height: 3px;
+        width: 100%;
+      }
+      .urgency-overdue .proj-urgency-strip {
+        background: #ef4444;
+      }
+      .urgency-critical .proj-urgency-strip {
+        background: linear-gradient(90deg, #ef4444, #f97316);
+      }
+      .urgency-sprint .proj-urgency-strip {
+        background: linear-gradient(90deg, #f97316, var(--lp-amber));
+      }
+      .urgency-preparing .proj-urgency-strip {
+        background: linear-gradient(90deg, var(--lp-amber), #fbbf24);
+      }
+      .urgency-runway .proj-urgency-strip {
+        background: linear-gradient(90deg, var(--lp-teal), #34d399);
+      }
+
+      .proj-card-body {
+        padding: 0.8rem 0.9rem 0.7rem;
+      }
+      .proj-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.55rem;
+        margin-bottom: 0.55rem;
+      }
+      .proj-title {
+        flex: 1;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--lp-text-strong);
+        line-height: 1.3;
+      }
+      .proj-ddl-badge {
+        flex-shrink: 0;
+        font-family: var(--lp-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.18rem 0.45rem;
+        border-radius: 999px;
+        white-space: nowrap;
+        letter-spacing: 0.02em;
+      }
+      .urgency-overdue .proj-ddl-badge {
+        background: rgba(239, 68, 68, 0.18);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .urgency-critical .proj-ddl-badge {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+      }
+      .urgency-sprint .proj-ddl-badge {
+        background: rgba(249, 115, 22, 0.15);
+        color: #fb923c;
+        border: 1px solid rgba(249, 115, 22, 0.25);
+      }
+      .urgency-preparing .proj-ddl-badge {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--lp-amber);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+      }
+      .urgency-runway .proj-ddl-badge {
+        background: rgba(20, 184, 166, 0.12);
+        color: #2dd4bf;
+        border: 1px solid rgba(20, 184, 166, 0.22);
+      }
+
+      .proj-progress-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+      }
+      .proj-progress-track {
+        flex: 1;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .proj-progress-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.5s ease;
+      }
+      .urgency-overdue .proj-progress-fill,
+      .urgency-critical .proj-progress-fill {
+        background: linear-gradient(90deg, #ef4444, #f97316);
+      }
+      .urgency-sprint .proj-progress-fill {
+        background: linear-gradient(90deg, #f97316, var(--lp-amber));
+      }
+      .urgency-preparing .proj-progress-fill {
+        background: linear-gradient(90deg, var(--lp-amber), #fbbf24);
+      }
+      .urgency-runway .proj-progress-fill {
+        background: linear-gradient(90deg, var(--lp-teal), #34d399);
+      }
+      .proj-progress-label {
+        font-family: var(--lp-mono);
+        font-size: 0.63rem;
+        color: var(--lp-muted);
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      .subtask-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .subtask-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.28rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      .subtask-row:last-child {
+        border-bottom: none;
+      }
+      .subtask-row:active {
+        opacity: 0.7;
+      }
+      .subtask-box {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        border: 1.5px solid rgba(245, 158, 11, 0.28);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.15s;
+        background: transparent;
+      }
+      .subtask-row.is-done .subtask-box {
+        background: var(--lp-teal);
+        border-color: var(--lp-teal);
+      }
+      .subtask-row.is-done .subtask-box::after {
+        content: "✓";
+        font-size: 0.55rem;
+        color: #0a0f1e;
+        font-weight: 800;
+      }
+      .subtask-text {
+        font-size: 0.82rem;
+        color: var(--lp-text);
+        flex: 1;
+        line-height: 1.35;
+        transition: all 0.15s;
+      }
+      .subtask-row.is-done .subtask-text {
+        text-decoration: line-through;
+        color: var(--lp-muted);
+        opacity: 0.6;
+      }
+      .subtask-row.is-next .subtask-text {
+        color: var(--lp-amber);
+        font-weight: 500;
+      }
+      .subtask-row.is-next .subtask-box {
+        border-color: rgba(245, 158, 11, 0.55);
+      }
+      .subtask-next-arrow {
+        font-size: 0.6rem;
+        color: var(--lp-amber);
+        flex-shrink: 0;
+        opacity: 0.8;
+      }
+
+      .subtask-expand-btn {
+        width: 100%;
+        background: none;
+        border: none;
+        color: var(--lp-muted);
+        font-size: 0.72rem;
+        cursor: pointer;
+        padding: 0.28rem 0;
+        text-align: left;
+        font-family: var(--lp-font);
+        transition: color 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .subtask-expand-btn:hover {
+        color: var(--lp-amber);
+      }
+
+      .subtask-add-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0 0.05rem;
+        border-top: 1px solid rgba(245, 158, 11, 0.05);
+        margin-top: 0.3rem;
+      }
+      .subtask-add-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--lp-text);
+        font-family: var(--lp-font);
+        font-size: 0.78rem;
+        outline: none;
+        min-width: 0;
+      }
+      .subtask-add-input::placeholder {
+        color: rgba(113, 113, 122, 0.4);
+      }
+      .subtask-add-confirm {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.22);
+        color: var(--lp-amber);
+        font-size: 0.8rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.15s;
+        line-height: 1;
+        font-weight: 700;
+      }
+      .subtask-add-confirm:hover {
+        background: rgba(245, 158, 11, 0.22);
+      }
+
+      .add-project-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        width: 100%;
+        padding: 0.7rem;
+        background: rgba(245, 158, 11, 0.04);
+        border: 1.5px dashed rgba(245, 158, 11, 0.18);
+        border-radius: var(--lp-radius-lg);
+        color: var(--lp-muted);
+        font-family: var(--lp-font);
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 0.25rem;
+      }
+      .add-project-btn:hover {
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.32);
+        color: var(--lp-amber);
+      }
+
+      .add-project-form {
+        background: var(--lp-bg-card);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        border-radius: var(--lp-radius-lg);
+        padding: 0.85rem 0.9rem;
+        margin-bottom: 0.85rem;
+        animation: fade-in 0.2s ease forwards;
+      }
+      .add-project-form input {
+        display: block;
+        width: 100%;
+        background: var(--lp-bg-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius);
+        padding: 0.48rem 0.65rem;
+        color: var(--lp-text);
+        font-family: var(--lp-font);
+        font-size: 0.84rem;
+        outline: none;
+        margin-bottom: 0.45rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+      }
+      .add-project-form input:focus {
+        border-color: var(--lp-amber);
+      }
+      .add-project-form input::placeholder {
+        color: var(--lp-muted);
+      }
+      .apf-row {
+        display: flex;
+        gap: 0.45rem;
+      }
+      .apf-row input {
+        flex: 1;
+        margin-bottom: 0.45rem;
+      }
+      .apf-actions {
+        display: flex;
+        gap: 0.45rem;
+        margin-top: 0.1rem;
+      }
+      .apf-save {
+        flex: 1;
+        padding: 0.42rem;
+        background: linear-gradient(135deg, var(--lp-amber), var(--lp-orange));
+        border: none;
+        border-radius: var(--lp-radius);
+        color: #0a0f1e;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+        font-family: var(--lp-font);
+        transition: transform 0.15s;
+      }
+      .apf-save:active {
+        transform: scale(0.97);
+      }
+      .apf-cancel {
+        padding: 0.42rem 0.7rem;
+        background: transparent;
+        border: 1px solid var(--lp-border);
+        border-radius: var(--lp-radius);
+        color: var(--lp-muted);
+        font-size: 0.8rem;
+        cursor: pointer;
+        font-family: var(--lp-font);
+      }
     </style>
   </head>
   <body>

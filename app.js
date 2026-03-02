@@ -415,6 +415,71 @@
 
     usageHistory: [1200, 890, 2100, 1560, 3200, 1890, 2450], // last 7 days tokens (k)
 
+    projects: [
+      {
+        id: "nsfc-2026",
+        title: "國自然基金申請",
+        deadline: "2026-04-30",
+        priority: "HIGH",
+        agent: "main",
+        notes: "面上項目，需提前 2 月籌備",
+        subtasks: [
+          { id: "s1", title: "確定研究方向與題目", done: true },
+          { id: "s2", title: "查閱近 5 年相關文獻（50+ 篇）", done: true },
+          { id: "s3", title: "撰寫立項依據", done: false },
+          { id: "s4", title: "設計研究內容與目標", done: false },
+          { id: "s5", title: "繪製技術路線圖", done: false },
+          { id: "s6", title: "可行性分析與研究基礎", done: false },
+          { id: "s7", title: "預算與人員安排", done: false },
+          { id: "s8", title: "提交系主任審核", done: false },
+          { id: "s9", title: "最終定稿上傳系統", done: false },
+        ],
+      },
+      {
+        id: "kairo-v2",
+        title: "Kairo 產品 v2.0 發布",
+        deadline: "2026-03-31",
+        priority: "HIGH",
+        agent: "executor",
+        notes: "完成 PWA + 行程功能",
+        subtasks: [
+          { id: "s1", title: "PWA Dashboard 完善", done: true },
+          { id: "s2", title: "日曆頁面實現", done: true },
+          { id: "s3", title: "任務推進視圖升級", done: false },
+          { id: "s4", title: "數據持久化", done: false },
+          { id: "s5", title: "發布 GitHub Pages", done: false },
+        ],
+      },
+      {
+        id: "investor-roadshow",
+        title: "投資人路演準備",
+        deadline: "2026-03-15",
+        priority: "HIGH",
+        agent: "main",
+        notes: "Series A Pre，3 位目標投資人",
+        subtasks: [
+          { id: "s1", title: "更新 pitch deck（20 頁）", done: false },
+          { id: "s2", title: "財務模型修正", done: false },
+          { id: "s3", title: "確認 Alex 會面時間", done: false },
+          { id: "s4", title: "準備 FAQ 問答集", done: false },
+        ],
+      },
+      {
+        id: "lang-n2",
+        title: "日語 N2 備考",
+        deadline: "2026-07-06",
+        priority: "MED",
+        agent: "executor",
+        notes: "7 月考試，每日練習",
+        subtasks: [
+          { id: "s1", title: "完成語法書第 1-5 章", done: true },
+          { id: "s2", title: "刷完 N2 真題 2019-2023", done: false },
+          { id: "s3", title: "詞彙量達到 6000", done: false },
+          { id: "s4", title: "完成 3 套模擬考", done: false },
+        ],
+      },
+    ],
+
     chatHistory: [
       {
         role: "assistant",
@@ -847,6 +912,45 @@
     try {
       localStorage.setItem("kw_calendar_events", JSON.stringify(events));
     } catch {}
+  }
+
+  function getProjects() {
+    try {
+      var stored = localStorage.getItem("kw_projects");
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch {}
+    // Seed with mock data
+    var seed = MOCK.projects.map(function (p) {
+      return JSON.parse(JSON.stringify(p));
+    });
+    try {
+      localStorage.setItem("kw_projects", JSON.stringify(seed));
+    } catch {}
+    return seed;
+  }
+
+  function saveProjects(projects) {
+    try {
+      localStorage.setItem("kw_projects", JSON.stringify(projects));
+    } catch {}
+  }
+
+  function getUrgencyClass(daysLeft) {
+    if (daysLeft < 0) {
+      return "urgency-overdue";
+    }
+    if (daysLeft < 14) {
+      return "urgency-critical";
+    }
+    if (daysLeft < 30) {
+      return "urgency-sprint";
+    }
+    if (daysLeft < 60) {
+      return "urgency-preparing";
+    }
+    return "urgency-runway";
   }
 
   var calendarCache = null;
@@ -1396,104 +1500,317 @@
       return;
     }
 
-    var tasks = MOCK.tasks;
+    var projects = getProjects();
     var now = new Date();
-    var todayStr = now.toISOString().slice(0, 10);
-    var weekEnd = new Date(now);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    var weekEndStr = weekEnd.toISOString().slice(0, 10);
-    var nextWeekEnd = new Date(now);
-    nextWeekEnd.setDate(nextWeekEnd.getDate() + 14);
-    var nextWeekEndStr = nextWeekEnd.toISOString().slice(0, 10);
+    var showAddForm = false;
 
-    var groups = { overdue: [], today: [], week: [], nextWeek: [], later: [], noDue: [] };
-    tasks.forEach(function (t) {
-      if (t.status === "done") {
-        return;
-      }
-      if (!t.due) {
-        groups.noDue.push(t);
-        return;
-      }
-      if (t.due < todayStr) {
-        groups.overdue.push(t);
-      } else if (t.due === todayStr) {
-        groups.today.push(t);
-      } else if (t.due <= weekEndStr) {
-        groups.week.push(t);
-      } else if (t.due <= nextWeekEndStr) {
-        groups.nextWeek.push(t);
-      } else {
-        groups.later.push(t);
-      }
-    });
+    function renderProjects() {
+      var sorted = projects.slice().toSorted(function (a, b) {
+        if (!a.deadline) {
+          return 1;
+        }
+        if (!b.deadline) {
+          return -1;
+        }
+        return a.deadline < b.deadline ? -1 : 1;
+      });
 
-    function dueTxt(due) {
-      if (!due) {
-        return "";
-      }
-      if (due < todayStr) {
-        var daysLate = Math.round((now - new Date(due + "T12:00:00")) / 86400000);
-        return "逾期 " + daysLate + "天";
-      }
-      if (due === todayStr) {
-        return "今天";
-      }
-      var diff = Math.round((new Date(due + "T12:00:00") - now) / 86400000);
-      if (diff === 1) {
-        return "明天";
-      }
-      if (diff < 7) {
-        return diff + " 天後";
-      }
-      if (diff < 14) {
-        return "下週";
-      }
-      return due;
-    }
+      var urgentCount = sorted.filter(function (p) {
+        if (!p.deadline) {
+          return false;
+        }
+        var d = Math.round((new Date(p.deadline + "T12:00:00") - now) / 86400000);
+        return d <= 14;
+      }).length;
+      var activeCount = sorted.filter(function (p) {
+        return p.subtasks.some(function (s) {
+          return !s.done;
+        });
+      }).length;
 
-    var agentEmoji = { main: "🧠", executor: "⚡", reviewer: "👁" };
+      var statsHtml =
+        `<div class="project-stats-bar">` +
+        `<span class="proj-stat-chip">${projects.length} 個主線任務</span>` +
+        (urgentCount > 0
+          ? `<span class="proj-stat-chip urgent">⚡ ${urgentCount} 個緊急</span>`
+          : "") +
+        (activeCount > 0
+          ? `<span class="proj-stat-chip on-track">${activeCount} 個進行中</span>`
+          : "") +
+        `</div>`;
 
-    function renderGroup(list, horizonCls, chipLabel) {
-      if (!list.length) {
-        return "";
-      }
-      var cards = list
-        .map(function (task, idx) {
-          var delay = Math.min(idx * 0.055, 0.55);
-          var emo = agentEmoji[task.agent] || "🤖";
-          var statusCls = task.status === "active" ? "status-active" : "status-pending";
-          var due = dueTxt(task.due);
-          return `<div class="task-mission-card priority-${task.priority} fade-in" style="animation-delay:${delay}s">
-            <div class="task-mission-band"></div>
-            <div class="task-mission-body">
-              <div class="task-mission-title">${escapeHtml(task.title)}</div>
-              <div class="task-mission-meta">
-                <div class="task-status-dot ${statusCls}"></div>
-                ${due ? `<span class="task-due-badge">${escapeHtml(due)}</span>` : ""}
-                <span class="task-agent-label">${emo} ${escapeHtml(task.agent)}</span>
-              </div>
-            </div>
-          </div>`;
+      var formHtml = showAddForm
+        ? `<div class="add-project-form" id="add-project-form">
+          <input type="text" id="apf-title" placeholder="主線任務名稱（如：申請國自然基金）" maxlength="60" />
+          <div class="apf-row">
+            <input type="date" id="apf-deadline" placeholder="截止日期" />
+            <input type="text" id="apf-notes" placeholder="備注（可選）" maxlength="80" />
+          </div>
+          <div class="apf-actions">
+            <button class="apf-save" id="apf-save">＋ 創建</button>
+            <button class="apf-cancel" id="apf-cancel">取消</button>
+          </div>
+        </div>`
+        : "";
+
+      var cardsHtml = sorted
+        .map(function (proj, idx) {
+          var doneCount = proj.subtasks.filter(function (s) {
+            return s.done;
+          }).length;
+          var totalCount = proj.subtasks.length;
+          var pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+          var daysLeft = proj.deadline
+            ? Math.round((new Date(proj.deadline + "T12:00:00") - now) / 86400000)
+            : null;
+          var urgency = daysLeft === null ? "urgency-runway" : getUrgencyClass(daysLeft);
+
+          var ddlText =
+            daysLeft === null
+              ? "無截止"
+              : daysLeft < 0
+                ? `逾期 ${-daysLeft} 天`
+                : daysLeft === 0
+                  ? "今天截止"
+                  : daysLeft === 1
+                    ? "明天截止"
+                    : daysLeft < 7
+                      ? `${daysLeft} 天後`
+                      : daysLeft < 30
+                        ? `${Math.floor(daysLeft / 7)} 週後`
+                        : `${Math.ceil(daysLeft / 30)} 月後 · ${proj.deadline.slice(5)}`;
+
+          var SHOW = 5;
+          var nextUpIdx = proj.subtasks.findIndex(function (s) {
+            return !s.done;
+          });
+          var visibleSubs = proj.subtasks.slice(0, SHOW);
+          var hiddenCount = Math.max(0, proj.subtasks.length - SHOW);
+
+          var subsHtml = visibleSubs
+            .map(function (sub, si) {
+              var isNext = si === nextUpIdx && !sub.done;
+              return (
+                `<li class="subtask-row${sub.done ? " is-done" : ""}${isNext ? " is-next" : ""}" ` +
+                `data-proj="${escapeHtml(proj.id)}" data-sub="${escapeHtml(sub.id)}">` +
+                `<div class="subtask-box"></div>` +
+                `<span class="subtask-text">${escapeHtml(sub.title)}</span>` +
+                (isNext ? `<span class="subtask-next-arrow">◀</span>` : "") +
+                `</li>`
+              );
+            })
+            .join("");
+
+          var moreHtml =
+            hiddenCount > 0
+              ? `<button class="subtask-expand-btn" data-proj="${escapeHtml(proj.id)}" data-action="expand">` +
+                `··· 還有 ${hiddenCount} 項未顯示</button>`
+              : "";
+
+          var delay = Math.min(idx * 0.07, 0.56);
+
+          return (
+            `<div class="project-mission-card ${urgency} fade-in" ` +
+            `style="animation-delay:${delay}s" data-proj="${escapeHtml(proj.id)}">` +
+            `<div class="proj-urgency-strip"></div>` +
+            `<div class="proj-card-body">` +
+            `<div class="proj-header">` +
+            `<div class="proj-title">${escapeHtml(proj.title)}</div>` +
+            `<span class="proj-ddl-badge">${escapeHtml(ddlText)}</span>` +
+            `</div>` +
+            `<div class="proj-progress-row">` +
+            `<div class="proj-progress-track"><div class="proj-progress-fill" style="width:${pct}%"></div></div>` +
+            `<span class="proj-progress-label">${pct}% · ${doneCount}/${totalCount}</span>` +
+            `</div>` +
+            `<ul class="subtask-list">${subsHtml}</ul>` +
+            moreHtml +
+            `<div class="subtask-add-row">` +
+            `<input class="subtask-add-input" type="text" placeholder="+ 新增子任務…" maxlength="80" data-proj="${escapeHtml(proj.id)}" />` +
+            `<button class="subtask-add-confirm" data-proj="${escapeHtml(proj.id)}" data-action="add-sub">+</button>` +
+            `</div>` +
+            `</div>` +
+            `</div>`
+          );
         })
         .join("");
-      return `<div class="task-horizon-group ${horizonCls}">
-        <div class="task-horizon-chip">${chipLabel}</div>
-        ${cards}
-      </div>`;
+
+      content.innerHTML =
+        `<div id="cal-task-view">` +
+        statsHtml +
+        formHtml +
+        cardsHtml +
+        `<button class="add-project-btn" id="show-add-proj">＋ 新增主線任務</button>` +
+        `</div>`;
+
+      // ── event delegation ──────────────────────────────────────────
+
+      // Toggle subtask done
+      content.querySelectorAll(".subtask-row").forEach(function (row) {
+        row.addEventListener("click", function () {
+          var pId = row.dataset.proj;
+          var sId = row.dataset.sub;
+          var p = projects.find(function (x) {
+            return x.id === pId;
+          });
+          if (!p) {
+            return;
+          }
+          var s = p.subtasks.find(function (x) {
+            return x.id === sId;
+          });
+          if (!s) {
+            return;
+          }
+          s.done = !s.done;
+          saveProjects(projects);
+          renderProjects();
+        });
+      });
+
+      // Add subtask confirm button
+      content.querySelectorAll("[data-action='add-sub']").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var pId = btn.dataset.proj;
+          var inp = content.querySelector(`.subtask-add-input[data-proj="${pId}"]`);
+          var title = inp ? inp.value.trim() : "";
+          if (!title) {
+            if (inp) {
+              inp.focus();
+            }
+            return;
+          }
+          var p = projects.find(function (x) {
+            return x.id === pId;
+          });
+          if (!p) {
+            return;
+          }
+          p.subtasks.push({ id: "s" + Date.now(), title: title, done: false });
+          saveProjects(projects);
+          renderProjects();
+        });
+      });
+
+      // Add subtask Enter key
+      content.querySelectorAll(".subtask-add-input").forEach(function (inp) {
+        inp.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter") {
+            return;
+          }
+          var btn = content.querySelector(
+            `[data-action="add-sub"][data-proj="${inp.dataset.proj}"]`,
+          );
+          if (btn) {
+            btn.click();
+          }
+        });
+      });
+
+      // Expand hidden subtasks
+      content.querySelectorAll("[data-action='expand']").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var pId = btn.dataset.proj;
+          var p = projects.find(function (x) {
+            return x.id === pId;
+          });
+          if (!p) {
+            return;
+          }
+          var nextUp = p.subtasks.findIndex(function (s) {
+            return !s.done;
+          });
+          var card = content.querySelector(`.project-mission-card[data-proj="${pId}"]`);
+          if (!card) {
+            return;
+          }
+          var ul = card.querySelector(".subtask-list");
+          if (!ul) {
+            return;
+          }
+          ul.innerHTML = p.subtasks
+            .map(function (sub, si) {
+              var isNext = si === nextUp && !sub.done;
+              return (
+                `<li class="subtask-row${sub.done ? " is-done" : ""}${isNext ? " is-next" : ""}" ` +
+                `data-proj="${escapeHtml(pId)}" data-sub="${escapeHtml(sub.id)}">` +
+                `<div class="subtask-box"></div>` +
+                `<span class="subtask-text">${escapeHtml(sub.title)}</span>` +
+                (isNext ? `<span class="subtask-next-arrow">◀</span>` : "") +
+                `</li>`
+              );
+            })
+            .join("");
+          btn.remove();
+          ul.querySelectorAll(".subtask-row").forEach(function (row) {
+            row.addEventListener("click", function () {
+              var sId = row.dataset.sub;
+              var s = p.subtasks.find(function (x) {
+                return x.id === sId;
+              });
+              if (!s) {
+                return;
+              }
+              s.done = !s.done;
+              saveProjects(projects);
+              renderProjects();
+            });
+          });
+        });
+      });
+
+      // Show add-project form
+      var showBtn = document.getElementById("show-add-proj");
+      if (showBtn) {
+        showBtn.addEventListener("click", function () {
+          showAddForm = true;
+          renderProjects();
+          var t = document.getElementById("apf-title");
+          if (t) {
+            t.focus();
+          }
+        });
+      }
+
+      // Save new project
+      var saveBtn = document.getElementById("apf-save");
+      if (saveBtn) {
+        saveBtn.addEventListener("click", function () {
+          var t = document.getElementById("apf-title");
+          var d = document.getElementById("apf-deadline");
+          var n = document.getElementById("apf-notes");
+          var title = t ? t.value.trim() : "";
+          if (!title) {
+            if (t) {
+              t.focus();
+            }
+            return;
+          }
+          projects.push({
+            id: "proj-" + Date.now(),
+            title: title,
+            deadline: d ? d.value : "",
+            priority: "HIGH",
+            agent: "main",
+            notes: n ? n.value.trim() : "",
+            subtasks: [],
+          });
+          saveProjects(projects);
+          showAddForm = false;
+          renderProjects();
+        });
+      }
+
+      // Cancel add form
+      var cancelBtn = document.getElementById("apf-cancel");
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", function () {
+          showAddForm = false;
+          renderProjects();
+        });
+      }
     }
 
-    var html =
-      renderGroup(groups.overdue, "horizon-overdue", "⚠ 逾期") +
-      renderGroup(groups.today, "horizon-today", "▶ 今日") +
-      renderGroup(groups.week, "horizon-week", "本週") +
-      renderGroup(groups.nextWeek, "horizon-next-week", "下週") +
-      renderGroup(groups.later, "horizon-later", "之後") +
-      renderGroup(groups.noDue, "horizon-no-due", "無截止");
-
-    content.innerHTML = html
-      ? `<div id="cal-task-view">${html}</div>`
-      : '<div class="empty-state"><div class="empty-state-icon">🎯</div>所有任務已完成！</div>';
+    renderProjects();
   }
 
   // ─── Task Highlights (Dashboard) ──────────────────────────────────────────
