@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="40" fill="#0a0f1e"/>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- K lettermark -->
+  <text x="96" y="138" font-family="'Sora','Helvetica Neue',sans-serif" font-size="110" font-weight="900" fill="url(#g)" text-anchor="middle" filter="url(#glow)">K</text>
+  <!-- Amber dot -->
+  <circle cx="148" cy="54" r="12" fill="#f59e0b" opacity="0.9"/>
+</svg>

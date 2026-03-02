@@ -1,0 +1,38 @@
+{
+  "name": "Kairo Command Center",
+  "short_name": "Kairo",
+  "description": "個人全能 AI 秘書指揮中心 — 隨時了解 Kairo 狀態、對話、管理任務",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0a0f1e",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "對話",
+      "url": "./#chat",
+      "description": "與 Kairo 對話"
+    },
+    {
+      "name": "捕捉",
+      "url": "./#capture",
+      "description": "快速捕捉想法"
+    }
+  ]
+}
