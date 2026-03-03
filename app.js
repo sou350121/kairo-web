@@ -905,15 +905,6 @@
     return item;
   }
 
-  function deleteLocalCalendarEvent(id) {
-    var events = getLocalCalendarEvents().filter(function (e) {
-      return e.id !== id;
-    });
-    try {
-      localStorage.setItem("kw_calendar_events", JSON.stringify(events));
-    } catch {}
-  }
-
   function getProjects() {
     try {
       var stored = localStorage.getItem("kw_projects");
@@ -1006,8 +997,7 @@
 
   // ─── Calendar Page Renderer ───────────────────────────────────────────────
 
-  var calendarView = "today";
-  var calendarViewMode = "grid"; // "grid" | "timeline" | "tasks"
+  var calendarViewMode = "grid"; // "grid" | "tasks"
   var calendarNavYear = new Date().getFullYear();
   var calendarNavMonth = new Date().getMonth(); // 0-based
   var calendarSelectedDate = null; // "YYYY-MM-DD"
@@ -1026,261 +1016,25 @@
     if (addDateEl && !addDateEl.value) {
       addDateEl.value = new Date().toISOString().slice(0, 10);
     }
-    // show/hide add strip based on mode
-    var strip = document.getElementById("cal-add-strip");
-    if (strip) {
-      strip.style.display = calendarViewMode === "tasks" ? "none" : "";
-    }
 
-    if (calendarViewMode === "grid") {
-      var events = await fetchCalendarData();
-      renderCalendarGridView(events);
-    } else if (calendarViewMode === "timeline") {
-      var events2 = await fetchCalendarData();
-      renderCalendarTimelineView(events2);
-    } else {
+    if (calendarViewMode === "tasks") {
+      var strip = document.getElementById("cal-add-strip");
+      if (strip) {
+        strip.style.display = "none";
+      }
       renderTaskDrivenView();
+      return;
     }
+
+    // grid mode (also catch legacy "timeline" value)
+    calendarViewMode = "grid";
+    var strip2 = document.getElementById("cal-add-strip");
+    if (strip2) {
+      strip2.style.display = "";
+    }
+    var events = await fetchCalendarData();
+    renderCalendarGridView(events);
   }
-
-  function renderCalendarHero(events) {
-    var container = document.getElementById("cal-hero");
-    if (!container) {
-      return;
-    }
-
-    var now = new Date();
-    var todayStr = now.toISOString().slice(0, 10);
-    var nowTime = now.getHours() * 60 + now.getMinutes();
-
-    // Find next upcoming event
-    var next = null;
-    for (var i = 0; i < events.length; i++) {
-      var ev = events[i];
-      if (ev.allDay) {
-        continue;
-      }
-      if (ev.date > todayStr) {
-        next = ev;
-        break;
-      }
-      if (ev.date === todayStr) {
-        var parts = (ev.time || "00:00").split(":");
-        var evMin = parseInt(parts[0] || "0") * 60 + parseInt(parts[1] || "0");
-        if (evMin > nowTime) {
-          next = ev;
-          break;
-        }
-      }
-    }
-
-    if (!next) {
-      container.innerHTML = `
-        <div class="cal-hero-card fade-in">
-          <div class="cal-hero-label">NEXT UP</div>
-          <div class="cal-hero-title" style="color:var(--lp-muted)">今日行程已全部完成 ✨</div>
-          <div class="cal-hero-meta">明日繼續加油</div>
-        </div>`;
-      return;
-    }
-
-    // Countdown
-    var evDate = new Date(next.date + "T" + next.time + ":00");
-    var diffMs = evDate - now;
-    var diffMin = Math.round(diffMs / 60000);
-    var countdownStr;
-    if (diffMin < 60) {
-      countdownStr = diffMin + " 分後";
-    } else if (diffMin < 1440) {
-      countdownStr = Math.floor(diffMin / 60) + " 小時後";
-    } else {
-      countdownStr = Math.floor(diffMin / 1440) + " 天後";
-    }
-
-    var typeColors = {
-      meeting: "#3b82f6",
-      important: "#f59e0b",
-      study: "#a78bfa",
-      health: "#14b8a6",
-      personal: "#f472b6",
-      work: "#3b82f6",
-    };
-    var borderColor = typeColors[next.type] || "var(--lp-amber)";
-
-    container.innerHTML = `
-      <div class="cal-hero-card fade-in" style="border-left-color:${borderColor}">
-        <div class="cal-hero-label">NEXT UP</div>
-        <div class="cal-hero-time">${escapeHtml(next.time)}</div>
-        <div class="cal-hero-title">${escapeHtml(next.summary)}</div>
-        <div class="cal-hero-meta">
-          ${next.location ? "📍 " + escapeHtml(next.location) + "&ensp;" : ""}
-          <span class="cal-countdown">${countdownStr}</span>
-        </div>
-      </div>`;
-  }
-
-  function renderCalendarTimeline(events, view) {
-    var container = document.getElementById("cal-timeline");
-    if (!container) {
-      return;
-    }
-
-    var now = new Date();
-    var todayStr = now.toISOString().slice(0, 10);
-    var nowTime = now.getHours() * 60 + now.getMinutes();
-
-    // Filter by view
-    var filtered;
-    if (view === "today") {
-      filtered = events.filter(function (ev) {
-        return ev.date === todayStr;
-      });
-    } else if (view === "week") {
-      var weekEnd = new Date(now);
-      weekEnd.setDate(weekEnd.getDate() + 7);
-      var weekEndStr = weekEnd.toISOString().slice(0, 10);
-      filtered = events.filter(function (ev) {
-        return ev.date >= todayStr && ev.date <= weekEndStr;
-      });
-    } else {
-      filtered = events.slice();
-    }
-
-    if (filtered.length === 0) {
-      container.innerHTML =
-        '<div class="empty-state"><div class="empty-state-icon">📅</div>暫無行程</div>';
-      return;
-    }
-
-    // Group by date
-    var groups = {};
-    var groupOrder = [];
-    filtered.forEach(function (ev) {
-      if (!groups[ev.date]) {
-        groups[ev.date] = [];
-        groupOrder.push(ev.date);
-      }
-      groups[ev.date].push(ev);
-    });
-
-    var html = "";
-    var delay = 0;
-
-    groupOrder.forEach(function (dateStr) {
-      var dayEvents = groups[dateStr];
-      var isToday = dateStr === todayStr;
-
-      // Day header
-      var dateObj = new Date(dateStr + "T12:00:00");
-      var dateLabel = dateObj.toLocaleDateString("zh-TW", {
-        month: "numeric",
-        day: "numeric",
-        weekday: "short",
-      });
-      html += `<div class="cal-day-header">
-        ${escapeHtml(dateLabel)}
-        ${isToday ? '<span class="cal-day-today-pill">TODAY</span>' : ""}
-      </div>`;
-
-      var nowLineInserted = false;
-
-      dayEvents.forEach(function (ev) {
-        // Insert NOW indicator before first future event today
-        if (isToday && !nowLineInserted && !ev.allDay) {
-          var pts = (ev.time || "00:00").split(":");
-          var evMin = parseInt(pts[0] || "0") * 60 + parseInt(pts[1] || "0");
-          if (evMin > nowTime) {
-            nowLineInserted = true;
-            var nowLabel = now.toLocaleTimeString("zh-TW", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            });
-            html += `<div class="cal-now-line">
-              <div class="cal-now-dot"></div>
-              <div class="cal-now-bar"></div>
-              <div class="cal-now-label">${escapeHtml(nowLabel)}</div>
-            </div>`;
-          }
-        }
-
-        // Is past?
-        var isPast = false;
-        if (!ev.allDay) {
-          if (ev.date < todayStr) {
-            isPast = true;
-          } else if (ev.date === todayStr) {
-            var pts2 = (ev.time || "00:00").split(":");
-            var evMin2 = parseInt(pts2[0] || "0") * 60 + parseInt(pts2[1] || "0");
-            isPast = evMin2 < nowTime;
-          }
-        }
-
-        // Source badge
-        var badgeClass =
-          ev.source === "feishu"
-            ? "cal-badge-feishu"
-            : ev.source === "local"
-              ? "cal-badge-local"
-              : ev.source === "queue"
-                ? "cal-badge-queue"
-                : "cal-badge-mock";
-        var badgeLabel =
-          ev.source === "feishu"
-            ? "飛書"
-            : ev.source === "local"
-              ? "本地"
-              : ev.source === "queue"
-                ? "Queue"
-                : "Demo";
-
-        var deleteBtn =
-          ev.source === "local"
-            ? `<button class="cal-delete-btn" data-del-id="${ev.id}" aria-label="刪除事件" title="刪除">✕</button>`
-            : "";
-
-        var sub = "";
-        if (ev.location) {
-          sub += "📍 " + escapeHtml(ev.location);
-        }
-        if (ev.attendees) {
-          sub += (sub ? " · " : "") + escapeHtml(ev.attendees);
-        }
-
-        var animDelay = Math.min(delay * 0.06, 0.8);
-
-        html += `<div class="cal-event fade-in ${isPast ? "cal-event-past" : ""}" data-type="${escapeHtml(ev.type || "personal")}" style="animation-delay:${animDelay}s" role="listitem">
-          <div class="cal-event-time">${escapeHtml(ev.allDay ? "全天" : ev.time)}</div>
-          <div class="cal-event-body">
-            <div class="cal-event-title">${escapeHtml(ev.summary)}</div>
-            ${sub ? `<div class="cal-event-sub">${sub}</div>` : ""}
-          </div>
-          <div class="cal-event-meta">
-            <span class="cal-badge ${badgeClass}">${badgeLabel}</span>
-            ${deleteBtn}
-          </div>
-        </div>`;
-
-        delay++;
-      });
-    });
-
-    container.innerHTML = html;
-
-    // Bind delete buttons
-    container.querySelectorAll(".cal-delete-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var id = parseInt(btn.dataset.delId);
-        if (id) {
-          deleteLocalCalendarEvent(id);
-          calendarCache = null;
-          void renderCalendar();
-        }
-      });
-    });
-  }
-
-  // ─── Calendar Grid View ───────────────────────────────────────────────────
 
   function renderCalendarGridView(events) {
     var content = document.getElementById("cal-content");
@@ -1292,6 +1046,32 @@
     var todayStr = now.toISOString().slice(0, 10);
     var year = calendarNavYear;
     var month = calendarNavMonth; // 0-based
+
+    // Find next upcoming event for the banner
+    var upcoming = events
+      .filter(function (e) {
+        var dt = new Date(e.date + (e.time && e.time !== "全天" ? "T" + e.time : "T23:59"));
+        return dt >= now;
+      })
+      .toSorted(function (a, b) {
+        return new Date(a.date) - new Date(b.date);
+      })[0];
+
+    var nextBannerHtml = "";
+    if (upcoming) {
+      var upTimeLabel =
+        upcoming.time === "全天" ? upcoming.date : upcoming.date + " " + upcoming.time;
+      nextBannerHtml =
+        '<div class="cal-next-banner">' +
+        '<span class="cal-next-banner-label">NEXT</span>' +
+        '<span class="cal-next-banner-title">' +
+        escapeHtml(upcoming.summary) +
+        "</span>" +
+        '<span class="cal-next-banner-time">' +
+        escapeHtml(upTimeLabel) +
+        "</span>" +
+        "</div>";
+    }
 
     // Build event map by date
     var eventMap = {};
@@ -1341,16 +1121,6 @@
       })
       .join("");
 
-    var typeColors = {
-      meeting: "#3b82f6",
-      important: "#f59e0b",
-      study: "#a78bfa",
-      health: "#14b8a6",
-      personal: "#f472b6",
-      work: "#3b82f6",
-      local: "#f59e0b",
-    };
-
     var cellsHtml = cells
       .map(function (cell) {
         var cls = ["cal-cell"];
@@ -1381,7 +1151,7 @@
 
     // Day panel
     var dayPanelHtml = "";
-    if (calendarSelectedDate && eventMap[calendarSelectedDate] !== undefined) {
+    if (calendarSelectedDate) {
       var selObj = new Date(calendarSelectedDate + "T12:00:00");
       var selLabel = selObj.toLocaleDateString("zh-TW", {
         month: "long",
@@ -1392,40 +1162,59 @@
       var evRowsHtml = selEvs.length
         ? selEvs
             .map(function (ev) {
-              var color = typeColors[ev.type] || "var(--lp-amber)";
-              return `<div class="cal-day-event-row">
-              <div class="cal-day-event-dot" style="background:${color}"></div>
-              <div class="cal-day-event-time">${escapeHtml(ev.allDay ? "全天" : ev.time)}</div>
-              <div class="cal-day-event-title">${escapeHtml(ev.summary)}</div>
-            </div>`;
+              var type = inferEventType(ev.summary);
+              var timeLabel = ev.allDay ? "全天" : ev.time || "";
+              var loc = ev.location && ev.location !== "-" ? ev.location : "";
+              return (
+                '<div class="cal-day-event-item">' +
+                '<span class="cal-day-event-time">' +
+                escapeHtml(timeLabel) +
+                "</span>" +
+                '<div class="cal-day-event-bar type-' +
+                escapeHtml(type) +
+                '"></div>' +
+                '<div class="cal-day-event-body">' +
+                '<div class="cal-day-event-title">' +
+                escapeHtml(ev.summary) +
+                "</div>" +
+                (loc ? '<div class="cal-day-event-meta">📍 ' + escapeHtml(loc) + "</div>" : "") +
+                "</div>" +
+                "</div>"
+              );
             })
             .join("")
-        : `<div style="font-size:0.8rem;color:var(--lp-muted);padding:0.25rem 0">無行程</div>`;
-      dayPanelHtml = `<div id="cal-day-panel"><div class="cal-day-panel-header">${escapeHtml(selLabel)}</div>${evRowsHtml}</div>`;
-    } else if (calendarSelectedDate) {
-      var selObj2 = new Date(calendarSelectedDate + "T12:00:00");
-      var selLabel2 = selObj2.toLocaleDateString("zh-TW", {
-        month: "long",
-        day: "numeric",
-        weekday: "long",
-      });
-      dayPanelHtml = `<div id="cal-day-panel"><div class="cal-day-panel-header">${escapeHtml(selLabel2)}</div><div style="font-size:0.8rem;color:var(--lp-muted);padding:0.25rem 0">無行程</div></div>`;
+        : '<div style="font-size:0.8rem;color:var(--lp-muted);padding:0.25rem 0">無行程</div>';
+      dayPanelHtml =
+        '<div id="cal-day-panel"><div class="cal-day-panel-header">' +
+        escapeHtml(selLabel) +
+        "</div>" +
+        evRowsHtml +
+        "</div>";
     }
 
-    content.innerHTML = `<div id="cal-grid-view">
-      <div class="cal-month-nav">
-        <button class="cal-month-nav-btn" id="cal-prev-month" aria-label="上月">‹</button>
-        <div class="cal-month-title">
-          <span class="cal-month-name">${monthNames[month]}</span>
-          <span class="cal-month-year">${year}</span>
-        </div>
-        <button class="cal-month-nav-btn" id="cal-next-month" aria-label="下月">›</button>
-      </div>
-      <div class="cal-grid-wrap">
-        <div class="cal-grid">${dowHtml}${cellsHtml}</div>
-        ${dayPanelHtml}
-      </div>
-    </div>`;
+    content.innerHTML =
+      '<div id="cal-grid-view">' +
+      nextBannerHtml +
+      '<div class="cal-month-nav">' +
+      '<button class="cal-month-nav-btn" id="cal-prev-month" aria-label="上月">‹</button>' +
+      '<div class="cal-month-title">' +
+      '<span class="cal-month-name">' +
+      monthNames[month] +
+      "</span>" +
+      '<span class="cal-month-year">' +
+      year +
+      "</span>" +
+      "</div>" +
+      '<button class="cal-month-nav-btn" id="cal-next-month" aria-label="下月">›</button>' +
+      "</div>" +
+      '<div class="cal-grid-wrap">' +
+      '<div class="cal-grid">' +
+      dowHtml +
+      cellsHtml +
+      "</div>" +
+      dayPanelHtml +
+      "</div>" +
+      "</div>";
 
     document.getElementById("cal-prev-month")?.addEventListener("click", function () {
       calendarNavMonth--;
@@ -1449,45 +1238,6 @@
         var date = cell.dataset.date;
         calendarSelectedDate = calendarSelectedDate === date ? null : date;
         renderCalendarGridView(events);
-      });
-    });
-  }
-
-  // ─── Calendar Timeline View (wrapper) ─────────────────────────────────────
-
-  function renderCalendarTimelineView(events) {
-    var content = document.getElementById("cal-content");
-    if (!content) {
-      return;
-    }
-
-    var viewTabs = ["today", "week", "all"]
-      .map(function (v) {
-        var labels = { today: "今天", week: "本週", all: "全部" };
-        var isActive = calendarView === v;
-        return `<button class="filter-tab${isActive ? " active" : ""}" data-cal-view="${v}" role="tab" ${isActive ? 'aria-selected="true"' : 'aria-selected="false"'}>${labels[v]}</button>`;
-      })
-      .join("");
-
-    content.innerHTML = `<div id="cal-timeline-view">
-      <div id="cal-hero"></div>
-      <div class="filter-tabs" role="tablist" aria-label="日曆檢視">${viewTabs}</div>
-      <div id="cal-timeline" class="card-list" role="list" aria-label="事件列表"></div>
-    </div>`;
-
-    renderCalendarHero(events);
-    renderCalendarTimeline(events, calendarView);
-
-    content.querySelectorAll("[data-cal-view]").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        content.querySelectorAll("[data-cal-view]").forEach(function (t) {
-          t.classList.remove("active");
-          t.setAttribute("aria-selected", "false");
-        });
-        tab.classList.add("active");
-        tab.setAttribute("aria-selected", "true");
-        calendarView = tab.dataset.calView || "today";
-        renderCalendarTimeline(events, calendarView);
       });
     });
   }
