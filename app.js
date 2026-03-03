@@ -7,12 +7,14 @@
     serverUrl: localStorage.getItem("kw_server") || "",
     token: localStorage.getItem("kw_token") || "",
     mode: localStorage.getItem("kw_mode") || "demo", // 'demo' | 'live'
+    lanUrl: localStorage.getItem("kw_lan_url") || "",
   };
 
   function saveConfig() {
     localStorage.setItem("kw_server", cfg.serverUrl);
     localStorage.setItem("kw_token", cfg.token);
     localStorage.setItem("kw_mode", cfg.mode);
+    localStorage.setItem("kw_lan_url", cfg.lanUrl);
   }
 
   // ─── KairoAPI Class ───────────────────────────────────────────────────────
@@ -1948,7 +1950,9 @@
         '<button onclick="setupCheckServer()" style="margin-top:0.4rem;padding:0.2rem 0.8rem;cursor:pointer">重試</button>' +
         '</div>';
     } else if (setupState.serverStatus === "mixed_content") {
-      var localUrl = (cfg.serverUrl || "").replace(/^https?:\/\//, "http://") + "/app/#setup";
+      // Prefer LAN IP for local access when behind NAT
+      var localBase = cfg.lanUrl || (cfg.serverUrl || "").replace(/^https?:\/\//, "http://");
+      var localUrl = localBase.replace(/^https:/, "http:") + "/app/#setup";
       serverBanner = '<div class="sw-alert sw-alert--warn" style="margin-bottom:1rem">' +
         '⚠️ 瀏覽器安全限制：HTTPS 頁面無法直接連接 HTTP 服務器。<br>' +
         '請使用本地地址訪問設定向導：<br>' +
@@ -1974,6 +1978,16 @@
       '<div style="font-size:0.78rem;color:var(--lp-muted);text-align:center;margin-top:0.5rem;">' +
         '找不到 PIN？在服務器上運行：<code style="background:var(--lp-bg-card);padding:0.1rem 0.3rem;border-radius:0.2rem;">cat ~/.openclaw/setup.pin</code>' +
       '</div>' +
+      (function() {
+        var pinMissing = setupState.validation["setup-pin"] && setupState.validation["setup-pin"].pinMissing;
+        return pinMissing ? (
+          '<div style="margin-top:0.5rem;background:var(--lp-bg-card);border-radius:0.4rem;padding:0.6rem;font-size:0.75rem">' +
+          '<div style="color:var(--lp-warn);margin-bottom:0.3rem">⚠️ PIN 不存在，需重新生成：</div>' +
+          '<code style="display:block;font-family:monospace;font-size:0.72rem;color:var(--lp-primary);white-space:pre-wrap">newpin=$(LC_ALL=C tr -dc A-Z0-9 &lt;/dev/urandom | head -c6); echo $newpin &gt; ~/.openclaw/setup.pin; echo $(($(date +%s)+3600)) &gt; ~/.openclaw/setup.pin.expiry; echo PIN: $newpin</code>' +
+          '<div style="margin-top:0.3rem;color:var(--lp-muted)">或 AI 助理可呼叫：POST /api/setup/generate-pin（本機限定）</div>' +
+          '</div>'
+        ) : '';
+      })() +
       '<div class="sw-nav-bar" style="justify-content:flex-end">' +
         '<button class="sw-btn sw-btn--primary" id="sw-next" ' +
           (pinValidation.state === "valid" ? "" : "disabled") + '>確認 →</button>' +
@@ -2253,6 +2267,13 @@
       '<span class="sw-celebration__check">🎉</span>' +
       '<div class="sw-celebration__title">設定完成！</div>' +
       '<div class="sw-celebration__sub">配置已寫入，請重啟 Gateway 以使設定生效。</div>' +
+      '<div style="background:var(--lp-bg-card);border-radius:0.5rem;padding:0.8rem;margin:0.8rem 0;text-align:left">' +
+        '<div style="font-size:0.75rem;color:var(--lp-muted);margin-bottom:0.4rem">重啟服務器上的 Gateway：</div>' +
+        '<code style="font-family:monospace;font-size:0.8rem;display:block;color:var(--lp-primary)">' +
+        'sudo systemctl --user restart openclaw-gateway.service' +
+        '</code>' +
+        '<div style="font-size:0.72rem;color:var(--lp-muted);margin-top:0.4rem">或：openclaw-restart</div>' +
+      '</div>' +
       '<button class="sw-btn sw-btn--primary" id="sw-go-dashboard" style="margin:0 auto;display:block;">前往儀表板</button>' +
     '</div>';
   }
@@ -3226,6 +3247,10 @@
             cfg.mode = "live";
             saveConfig();
           }
+          if (data.lanUrl && !cfg.lanUrl) {
+            cfg.lanUrl = data.lanUrl;
+            saveConfig();
+          }
           callback();
         })
         .catch(function() { callback(); });
@@ -3234,6 +3259,15 @@
     // Decide whether to show welcome screen or jump straight to app
     const hasVisited = localStorage.getItem("kw_visited");
     tryLoadConfigJson(function() {
+      // Auto-detect serverUrl when running from same-origin server
+      if (!cfg.serverUrl &&
+          typeof location !== "undefined" &&
+          !location.hostname.endsWith("github.io") &&
+          location.hostname !== "" &&
+          location.protocol !== "file:") {
+        cfg.serverUrl = location.protocol + "//" + location.host;
+        saveConfig();
+      }
       if (!hasVisited || !cfg.mode || cfg.mode === "demo") {
         if (cfg.serverUrl) {
           // Has server URL from config.json or URL param — skip welcome, go to setup
